@@ -13,11 +13,57 @@ import triton
 import triton.language as tl
 
 import block_sparse_ops
+import os
 
 """
 Fused Prefill Kernel.
 support SemSA layout.
 """
+
+
+class _sparse_attention_prefill_cuda(torch.autograd.Function):
+
+    @staticmethod
+    def forward(ctx, q, k, v, sm_scale, lut) -> torch.Tensor:
+        """
+        input:
+            q, k, v: (Z, H, N_CTX, L)
+            sm_scale: float
+            lut: (H, N_CTX/BLOCK_M, nnz)
+        output:
+            o: (Z, H, N_CTX, L)
+        """
+        # print("arrive _sparse_attention_prefill_cuda.forward")
+        lut = lut.to(torch.int)
+        # print(q.device, k.device, v.device, lut.device)
+        # print(q.dtype, k.dtype, v.dtype, type(sm_scale), lut.dtype)
+        out = block_sparse_ops.sparse_attention_prefill(q, k, v, sm_scale, lut)
+        return out
+
+sparse_attention_prefill_cuda = _sparse_attention_prefill_cuda.apply
+
+
+class _sparse_attention_prefill_cuda_warp(torch.autograd.Function):
+
+    @staticmethod
+    def forward(ctx, q, k, v, sm_scale, lut) -> torch.Tensor:
+        """
+        input:
+            q, k, v: (Z, H, N_CTX, L)
+            sm_scale: float
+            lut: (H, N_CTX/BLOCK_M, nnz)
+        output:
+            o: (Z, H, N_CTX, L)
+        """
+        # print("arrive _sparse_attention_prefill_cuda.forward")
+        lut = lut.to(torch.int)
+        # print(q.device, k.device, v.device, lut.device)
+        # print(q.dtype, k.dtype, v.dtype, type(sm_scale), lut.dtype)
+        out = block_sparse_ops.sparse_attention_prefill_warp(q, k, v, sm_scale, lut)
+        return out
+
+sparse_attention_prefill_cuda_warp = _sparse_attention_prefill_cuda_warp.apply
+
 
 @triton.jit
 def _sparse_attention_prefill_fwd_kernel(
@@ -108,7 +154,6 @@ def _sparse_attention_prefill_fwd_kernel(
     for nnz_id in range(NNZ):
         # we use nnz_id to indicate which block will be computed
         present_nnz_id = tl.load(lut + lut_offset + start_m * stride_lh + nnz_id * stride_lx)
-        # print("present_nnz_id is ", present_nnz_id)
         start_n = present_nnz_id * BLOCK_N
         start_n = tl.multiple_of(start_n, BLOCK_N) # hint for compiler
         present_nnz_id = present_nnz_id.to(tl.int32)
@@ -128,10 +173,9 @@ def _sparse_attention_prefill_fwd_kernel(
         # -- compute m_ij, p, l_ij
         m_ij = tl.max(qk, 1)
 
-        # p = tl.math.exp2(qk - m_ij[:, None])
-        p = tl.exp((qk - m_ij[:, None]) * 0.6931471805599453)
+        p = tl.math.exp2(qk - m_ij[:, None])
         # if a blcok has a row filled with "inf" (e.g., in the upper triangular), then m_ij == '-inf'. In this case, p should be set to '0', or exp2('inf') will trigger NaN
-        p = tl.where(m_ij[:, None] == tl.full((BLOCK_M, BLOCK_N), float("-inf"), tl.float32), 0.0, tl.exp((qk - m_ij[:, None]) * 0.6931471805599453)) # ignore the blocks in upper triangular part, which is indicated by last_nnz_id
+        p = tl.where(m_ij[:, None] == tl.full((BLOCK_M, BLOCK_N), float("-inf"), tl.float32), 0.0, tl.math.exp2(qk - m_ij[:, None])) # ignore the blocks in upper triangular part, which is indicated by last_nnz_id
         p = p * (last_nnz_id!=present_nnz_id) # ignore the blocks in upper triangular part, which is indicated by last_nnz_id
 
         l_ij = tl.sum(p, 1)
@@ -220,8 +264,6 @@ class _sparse_attention_prefill(torch.autograd.Function):
         num_warps = 4 if Lk <= 64 else 8
         num_stages = 4 if BLOCK_M <= 32 else 2
 
-        # print(f"lut stride is: {lut.stride(0)}, {lut.stride(1)}, {lut.stride(2)}")
-
         # ------------------------------- #
         _sparse_attention_prefill_fwd_kernel[grid](
             q, k ,v, sm_scale,
@@ -275,6 +317,7 @@ def _sparse_attention_prefill_fwd_kernel_no_make_block_ptr(
     K_ptrs = K + qvk_offset + (tk[:, None] * stride_kk + ty[None, :] * stride_kn)
     V_ptrs = V + qvk_offset + (ty[:, None] * stride_vk + tk[None, :] * stride_vn)
     O_ptrs = Out + qvk_offset + (start_m * BLOCK_M) * stride_om + (tx[:, None] * stride_om + tk[None, :] * stride_on)
+    P_ptrs = p_ref + (tx[:, None] * 64 + ty[None, :] * 1)
 
     offs_m = start_m * BLOCK_M + tx
     offs_n = ty
@@ -424,31 +467,104 @@ class _sparse_attention_prefill_no_make_block_ptr(torch.autograd.Function):
 
 sparse_attention_prefill_no_make_block_ptr = _sparse_attention_prefill_no_make_block_ptr.apply
 
-
-class _sparse_attention_prefill_cuda(torch.autograd.Function):
+class _sparse_attention(torch.autograd.Function):
 
     @staticmethod
-    def forward(ctx, q, k, v, sm_scale, lut) -> torch.Tensor:
+    def forward(
+            ctx, q, k, v, sm_scale, lut, BLOCK_M: int = 64, BLOCK_N: int = 64,
+            attention_mask = None, attention_dropout = 0.0
+        ) -> torch.Tensor:
         """
         input:
             q, k, v: (Z, H, N_CTX, L)
             sm_scale: float
             lut: (H, N_CTX/BLOCK_M, nnz)
+            BLOCK_M, BLOCK_N: int
         output:
             o: (Z, H, N_CTX, L)
         """
-        # print("arrive _sparse_attention_prefill_cuda.forward")
-        lut = lut.to(torch.int)
-        # print(q.device, k.device, v.device, lut.device)
-        # print(q.dtype, k.dtype, v.dtype, type(sm_scale), lut.dtype)
-        out = block_sparse_ops.sparse_attention_prefill(q, k, v, sm_scale, lut)
-        return out
+        dtype = q.dtype
+        assert dtype == torch.float16
 
-sparse_attention_prefill_cuda = _sparse_attention_prefill_cuda.apply
+        # shape constraints
+        Lq, Lk, Lv = q.shape[-1], k.shape[-1], v.shape[-1]
+        assert Lq == Lk and Lk == Lv
+        # assert Lk in {16, 32, 64, 128}
 
+        bsz, num_heads, q_len, _ = q.shape
+        kv_seq_len = k.size(2)
 
+        _is_decode = q_len < kv_seq_len
+        # decode
+        if _is_decode:
+            assert q_len == 1
 
+            query_states = q
+            key_states = k
+            value_states = v
+            # attn_weights = torch.matmul(query_states, key_states.transpose(2, 3)) / math.sqrt(self.head_dim)
+            attn_weights = torch.matmul(query_states, key_states.transpose(2, 3)) * sm_scale
 
+            if attn_weights.size() != (bsz, num_heads, q_len, kv_seq_len):
+                raise ValueError(
+                    f"Attention weights should be of size {(bsz, num_heads, q_len, kv_seq_len)}, but is"
+                    f" {attn_weights.size()}"
+                )
+
+            if attention_mask is not None:
+                if attention_mask.size() != (bsz, 1, q_len, kv_seq_len):
+                    raise ValueError(
+                        f"Attention mask should be of size {(bsz, 1, q_len, kv_seq_len)}, but is {attention_mask.size()}"
+                    )
+                attn_weights = attn_weights + attention_mask
+
+            # upcast attention to fp32
+            attn_weights = nn.functional.softmax(attn_weights, dim=-1, dtype=torch.float32).to(query_states.dtype)
+            attn_weights = nn.functional.dropout(attn_weights, p=attention_dropout, training=False)
+            attn_output = torch.matmul(attn_weights, value_states)
+
+            return attn_output
+
+        # prefill
+        else:
+            # return sparse_attention_prefill(q, k, v, sm_scale, lut, BLOCK_M, BLOCK_N)
+            # return sparse_attention_prefill_cuda(q, k, v, sm_scale, lut)[0]
+            return sparse_attention_prefill_cuda_warp(q, k, v, sm_scale, lut)[0]
+            # return sparse_attention_prefill_no_make_block_ptr(q, k, v, sm_scale, lut, BLOCK_M, BLOCK_N)
+            # print(q.shape, k.shape, v.shape)
+            ref = sparse_attention_prefill_cuda(q, k, v, sm_scale, lut)[0]
+            # k_trans = k.transpose(2, 3)
+            # sm_scale = torch.load("/home/yuzhen/mxTest/sparseAttentionTest/sm_scale.pth")
+            # qk_scale = sm_scale * 1.44269504
+            # p = torch.matmul(q, k_trans) * qk_scale
+            # s = torch.softmax(p, -1)
+            # ref = torch.matmul(s, v)
+            out = sparse_attention_prefill_cuda_warp(q, k, v, sm_scale, lut)[0]
+            print("max diff is", abs(ref - out).max().item())
+            print(ref[0][0][0][0].item(), out[0][0][0][0].item())
+            print(ref[0][0][5][0].item(), out[0][0][5][0].item())
+            mask = torch.isnan(out)
+            idx = torch.nonzero(mask)
+            print(idx.shape)
+            if (idx.shape[0] != 0):
+                print("-"*70)
+                bsz, head, seq_len, hidden_dim = idx[0]
+                print(idx[0], ref[bsz][head][seq_len][hidden_dim].item(), out[bsz][head][seq_len][hidden_dim].item())
+                if (os.path.exists("q.pth") == False):
+                    torch.save(q, "q.pth")
+                if (os.path.exists("k.pth") == False):
+                    torch.save(k, "k.pth")
+                if (os.path.exists("v.pth") == False):
+                    torch.save(v, "v.pth")
+                if (os.path.exists("lut.pth") == False):
+                    torch.save(lut, "lut.pth")
+                if (os.path.exists("sm_scale.pth") == False):
+                    torch.save(sm_scale, "sm_scale.pth")
+                bsz, head, seq_len, hidden_dim = idx[1]
+                print(idx[1], ref[bsz][head][seq_len][hidden_dim].item(), out[bsz][head][seq_len][hidden_dim].item())
+            return out
+
+sparse_attention = _sparse_attention.apply
 
 """
 Fused Decode Kernel.
@@ -610,97 +726,4 @@ class _sparse_attention_decode(torch.autograd.Function):
         # ctx.causal = causal
         return o
 
-sparse_attention_decode = _sparse_attention_decode.apply
-
-
-
-class _sparse_attention(torch.autograd.Function):
-
-    @staticmethod
-    def forward(
-            ctx, q, k, v, sm_scale, lut, BLOCK_M: int = 64, BLOCK_N: int = 64,
-            attention_mask = None, attention_dropout = 0.0
-        ) -> torch.Tensor:
-        """
-        input:
-            q, k, v: (Z, H, N_CTX, L)
-            sm_scale: float
-            lut: (H, N_CTX/BLOCK_M, nnz)
-            BLOCK_M, BLOCK_N: int
-        output:
-            o: (Z, H, N_CTX, L)
-        """
-        # print(q.size(0), q.size(1), q.size(2), q.size(3))
-        # print(k.size(0), k.size(1), k.size(2), k.size(3))
-        # print(v.size(0), v.size(1), v.size(2), v.size(3))
-        # print(lut.size(0), lut.size(1), lut.size(2))
-        dtype = q.dtype
-        assert dtype == torch.float16
-
-        # shape constraints
-        Lq, Lk, Lv = q.shape[-1], k.shape[-1], v.shape[-1]
-        assert Lq == Lk and Lk == Lv
-        # assert Lk in {16, 32, 64, 128}
-
-        bsz, num_heads, q_len, _ = q.shape
-        kv_seq_len = k.size(2)
-
-        _is_decode = q_len < kv_seq_len
-        # decode
-        if _is_decode:
-            # return sparse_attention_decode(q, k, v, sm_scale, lut, BLOCK_N)
-            assert q_len == 1
-
-            query_states = q
-            key_states = k
-            value_states = v
-            # attn_weights = torch.matmul(query_states, key_states.transpose(2, 3)) / math.sqrt(self.head_dim)
-            attn_weights = torch.matmul(query_states, key_states.transpose(2, 3)) * sm_scale
-
-            if attn_weights.size() != (bsz, num_heads, q_len, kv_seq_len):
-                raise ValueError(
-                    f"Attention weights should be of size {(bsz, num_heads, q_len, kv_seq_len)}, but is"
-                    f" {attn_weights.size()}"
-                )
-
-            if attention_mask is not None:
-                if attention_mask.size() != (bsz, 1, q_len, kv_seq_len):
-                    raise ValueError(
-                        f"Attention mask should be of size {(bsz, 1, q_len, kv_seq_len)}, but is {attention_mask.size()}"
-                    )
-                attn_weights = attn_weights + attention_mask
-
-            # upcast attention to fp32
-            attn_weights = nn.functional.softmax(attn_weights, dim=-1, dtype=torch.float32).to(query_states.dtype)
-            attn_weights = nn.functional.dropout(attn_weights, p=attention_dropout, training=False)
-            attn_output = torch.matmul(attn_weights, value_states)
-
-            return attn_output
-
-        # prefill
-        else:
-            return sparse_attention_prefill(q, k, v, sm_scale, lut, BLOCK_M, BLOCK_N)
-            # return sparse_attention_prefill_no_make_block_ptr(q, k, v, sm_scale, lut, BLOCK_M, BLOCK_N)
-            # return sparse_attention_prefill_cuda(q, k, v, sm_scale, lut)
-            # ref = sparse_attention_prefill(q, k, v, sm_scale, lut, BLOCK_M, BLOCK_N)
-            # out = sparse_attention_prefill_cuda(q, k, v, sm_scale, lut)
-            # print("max diff is", abs(ref - out).max().item())
-            # print(ref[0][0][0][0].item(), out[0][0][0][0].item())
-            # print(ref[0][0][5][0].item(), out[0][0][5][0].item())
-            # mask = torch.isnan(out)
-            # idx = torch.nonzero(mask)
-            # print(idx.shape)
-            # if (idx.shape[0] != 0):
-            #     print("-"*70)
-            #     bsz, head, seq_len, hidden_dim = idx[0]
-            #     print(idx[0], ref[bsz][head][seq_len][hidden_dim].item(), out[bsz][head][seq_len][hidden_dim].item())
-            #     torch.save(q, "q.pth")
-            #     torch.save(k, "k.pth")
-            #     torch.save(v, "v.pth")
-            #     torch.save(lut, "lut.pth")
-            #     torch.save(sm_scale, "sm_scale.pth")
-            #     bsz, head, seq_len, hidden_dim = idx[1]
-            #     print(idx[1], ref[bsz][head][seq_len][hidden_dim].item(), out[bsz][head][seq_len][hidden_dim].item())
-
-sparse_attention = _sparse_attention.apply
-
+# sparse_attention_decode = _sparse_attention_decode.apply
