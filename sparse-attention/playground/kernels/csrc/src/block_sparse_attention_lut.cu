@@ -39,7 +39,7 @@ std::vector<torch::Tensor> sparse_attention_prefill_warp(
     dim3 blockDim(1024, 1, 1);
     int NNZ = min((int)(lut.size(2)), (int)(ceil(seq_len / 64.0)));
 
-    // printf("entering kernel and bsz is: %d, head is: %d, seq_len is %d, hidden_dim is %d, lut_block is %d, lut_size is %d, NNZ is %d, gridDim.x is %d, gridDim.y is %d, gridDim.z is %d, blockDim.x is %d, blockDim.y is %d, blockDim.z is %d \n", bsz, head, seq_len, hidden_dim, lut_block, lut_size, NNZ, gridDim.x, gridDim.y, gridDim.z, blockDim.x, blockDim.y, blockDim.z);
+    printf("entering kernel and bsz is: %d, head is: %d, seq_len is %d, hidden_dim is %d, lut_block is %d, lut_size is %d, NNZ is %d, gridDim.x is %d, gridDim.y is %d, gridDim.z is %d, blockDim.x is %d, blockDim.y is %d, blockDim.z is %d \n", bsz, head, seq_len, hidden_dim, lut_block, lut_size, NNZ, gridDim.x, gridDim.y, gridDim.z, blockDim.x, blockDim.y, blockDim.z);
 
     sparse_attention_prefill_fwd_warp_kernel<<<gridDim, blockDim>>>(Q.data_ptr<at::Half>(), K.data_ptr<at::Half>(), V.data_ptr<at::Half>(), sm_scale, out.data_ptr<at::Half>(), lut.data_ptr<int>(), m_i.data_ptr<float>(), l_i.data_ptr<float>(), bsz, head, seq_len, hidden_dim, lut_block, lut_size, NNZ, p.data_ptr<float>());
 
@@ -101,5 +101,34 @@ torch::Tensor add(torch::Tensor a, torch::Tensor b){
 }
 
 
+torch::Tensor sparse_attention_prefill_p(
+    torch::Tensor Q, torch::Tensor K, float sm_scale, torch::Tensor lut
+) {
+    int bsz = Q.size(0);
+    int head = Q.size(1);
+    int seq_len = Q.size(2);
+    int hidden_dim = Q.size(3);
+    int lut_block = lut.size(1);
+    int lut_size = lut.size(2);
+
+    auto devid = Q.device().index();
+
+    auto options_p = torch::TensorOptions().dtype(torch::kFloat32).device(torch::kCUDA, devid);
+    // auto P = torch::zeros({bsz, head, seq_len, seq_len}, options_p);
+    auto P = torch::full({bsz, head, seq_len, seq_len}, -INFINITY, options_p);
+    // auto Q_load = torch::zeros_like(Q);
+    // auto K_load = torch::zeros_like(K);
+
+    dim3 gridDim((seq_len + 64 - 1) / 64, bsz * head, 1);
+    dim3 blockDim(1024, 1, 1);
+    int NNZ = min((int)(lut.size(2)), (int)(ceil(seq_len / 64.0)));
+
+    // printf("entering sparse_attention_prefill_p kernel and bsz is: %d, head is: %d, seq_len is %d, hidden_dim is %d, lut_block is %d, lut_size is %d, NNZ is %d, gridDim.x is %d, gridDim.y is %d, gridDim.z is %d, blockDim.x is %d, blockDim.y is %d, blockDim.z is %d \n", bsz, head, seq_len, hidden_dim, lut_block, lut_size, NNZ, gridDim.x, gridDim.y, gridDim.z, blockDim.x, blockDim.y, blockDim.z);
+
+    sparse_attention_prefill_fwd_p<<<gridDim, blockDim>>>(Q.data_ptr<at::Half>(), K.data_ptr<at::Half>(), sm_scale, P.data_ptr<float>(), lut.data_ptr<int>(), bsz, head, seq_len, hidden_dim, lut_block, lut_size, NNZ);
+
+    // return {P, Q_load, K_load};
+    return P;
+}
 
 

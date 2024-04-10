@@ -65,6 +65,44 @@ class _sparse_attention_prefill_cuda_warp(torch.autograd.Function):
 sparse_attention_prefill_cuda_warp = _sparse_attention_prefill_cuda_warp.apply
 
 
+class _sparse_attention_prefill_p_out(torch.autograd.Function):
+
+    @staticmethod
+    def forward(ctx, q, k, v, sm_scale, lut) -> torch.Tensor:
+        """
+        input:
+            q, k, v: (Z, H, N_CTX, L)
+            sm_scale: float
+            lut: (H, N_CTX/BLOCK_M, nnz)
+        output:
+            o: (Z, H, N_CTX, L)
+        """
+        # print("arrive _sparse_attention_prefill_cuda.forward")
+        lut = lut.to(torch.int)
+        bsz, head, seq_len = q.shape[0], q.shape[1], q.shape[2]
+        # print(q.device, k.device, v.device, lut.device)
+        # print(q.dtype, k.dtype, v.dtype, type(sm_scale), lut.dtype)
+        P = block_sparse_ops.sparse_attention_prefill_p(q, k, sm_scale, lut)
+        mask = torch.full((seq_len, seq_len), float("-inf")).to("cuda")
+        mask = torch.triu(mask, 1)
+        P = P + mask
+
+        m_i = torch.max(P, -1).values
+        m_i = m_i.view((bsz, head, seq_len, 1))
+
+        P = P - m_i
+        P = torch.exp2(P)
+        sum_P = torch.sum(P, -1, keepdim=True)
+        P = P / sum_P
+
+        P = P.to(torch.float16)
+        out = torch.matmul(P, v)
+
+        return out
+
+sparse_attention_prefill_p_out = _sparse_attention_prefill_p_out.apply
+
+
 @triton.jit
 def _sparse_attention_prefill_fwd_kernel(
     Q, K, V, sm_scale,
@@ -529,8 +567,9 @@ class _sparse_attention(torch.autograd.Function):
         else:
             # return sparse_attention_prefill(q, k, v, sm_scale, lut, BLOCK_M, BLOCK_N)
             # return sparse_attention_prefill_cuda(q, k, v, sm_scale, lut)[0]
-            return sparse_attention_prefill_cuda_warp(q, k, v, sm_scale, lut)[0]
+            # return sparse_attention_prefill_cuda_warp(q, k, v, sm_scale, lut)[0]
             # return sparse_attention_prefill_no_make_block_ptr(q, k, v, sm_scale, lut, BLOCK_M, BLOCK_N)
+            return sparse_attention_prefill_p_out(q, k, v, sm_scale, lut)
             # print(q.shape, k.shape, v.shape)
             ref = sparse_attention_prefill_cuda(q, k, v, sm_scale, lut)[0]
             # k_trans = k.transpose(2, 3)
@@ -539,13 +578,26 @@ class _sparse_attention(torch.autograd.Function):
             # p = torch.matmul(q, k_trans) * qk_scale
             # s = torch.softmax(p, -1)
             # ref = torch.matmul(s, v)
-            out = sparse_attention_prefill_cuda_warp(q, k, v, sm_scale, lut)[0]
+            # out = sparse_attention_prefill_cuda_warp(q, k, v, sm_scale, lut)[0]
+            out = sparse_attention_prefill_p_out(q, k, v, sm_scale, lut)
+            diff = abs(ref - out).max().item()
             print("max diff is", abs(ref - out).max().item())
             print(ref[0][0][0][0].item(), out[0][0][0][0].item())
             print(ref[0][0][5][0].item(), out[0][0][5][0].item())
             mask = torch.isnan(out)
             idx = torch.nonzero(mask)
             print(idx.shape)
+            if (diff > 5):
+                if (os.path.exists("q.pth") == False):
+                    torch.save(q, "q.pth")
+                if (os.path.exists("k.pth") == False):
+                    torch.save(k, "k.pth")
+                if (os.path.exists("v.pth") == False):
+                    torch.save(v, "v.pth")
+                if (os.path.exists("lut.pth") == False):
+                    torch.save(lut, "lut.pth")
+                if (os.path.exists("sm_scale.pth") == False):
+                    torch.save(sm_scale, "sm_scale.pth")
             if (idx.shape[0] != 0):
                 print("-"*70)
                 bsz, head, seq_len, hidden_dim = idx[0]
@@ -560,6 +612,11 @@ class _sparse_attention(torch.autograd.Function):
                     torch.save(lut, "lut.pth")
                 if (os.path.exists("sm_scale.pth") == False):
                     torch.save(sm_scale, "sm_scale.pth")
+                # torch.save(q, "q.pth")
+                # torch.save(k, "k.pth")
+                # torch.save(v, "v.pth")
+                # torch.save(lut, "lut.pth")
+                # torch.save(sm_scale, "sm_scale.pth")
                 bsz, head, seq_len, hidden_dim = idx[1]
                 print(idx[1], ref[bsz][head][seq_len][hidden_dim].item(), out[bsz][head][seq_len][hidden_dim].item())
             return out

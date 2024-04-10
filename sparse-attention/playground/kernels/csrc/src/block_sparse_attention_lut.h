@@ -20,3 +20,7 @@ std::vector<torch::Tensor> sparse_attention_prefill(
 
 torch::Tensor add(torch::Tensor a, torch::Tensor b);
 
+
+torch::Tensor sparse_attention_prefill_p(
+    torch::Tensor Q, torch::Tensor K, float sm_scale, torch::Tensor lut
+);
