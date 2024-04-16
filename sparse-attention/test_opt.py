@@ -12,7 +12,7 @@ import argparse
 from playground.attention.sparse_attention import set_static_attention_lut
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--model_name', type=str, default='/share/huangshan/opt-6.7b/', help='path to model')
+parser.add_argument('--model_name', type=str, default='/home/public/models/opt-6.7b/', help='path to model')
 parser.add_argument('--max_length', type=int, default=2048, help='max length of the sequence')
 parser.add_argument('--dataset_dir', type=str,default='EleutherAI/wikitext_document_level', help='path to dataset')
 parser.add_argument('--subset', type=str, default='wikitext-103-v1')
@@ -25,6 +25,7 @@ parser.add_argument('--layout_path', type=str, default=None)
 parser.add_argument('--use_lut', action='store_true')
 parser.add_argument('--lut_path', type=str, default=None)
 parser.add_argument('--block_size', type=int, default=64)
+parser.add_argument('--prompt', type=str, default="the man worked as a")
 
 args = parser.parse_args()
 
@@ -94,7 +95,8 @@ if __name__ == '__main__':
         param.requires_grad = False
 
     # CUDA_VISIBLE_DEVICES=6 python test_opt.py --use_lut --lut_path=/home/yuzhen/simple-evaluation-master/examples/opt_lut_density_26.pt
-    prompt = "the man worked as a"
+    
+    prompt = args.prompt
     input_ids = tokenizer(prompt, return_tensors="pt").input_ids.cuda()
     generated_ids = model.generate(input_ids, max_length=512)
     out = tokenizer.batch_decode(generated_ids, skip_special_tokens=True)

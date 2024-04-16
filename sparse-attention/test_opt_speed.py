@@ -119,7 +119,7 @@ def main(model_name, backend='hf', gpu=0):
             use_layout=False,
             layout_path=None,
             use_lut=True,
-            lut_path="/home/yuzhen/simple-evaluation-master/examples/opt_lut_density_26.pt",
+            lut_path="/home/huangshan/project/sparse-quant/sparse-attention/examples/opt_lut_density_26.pt",
             dtype=torch.float16,
             block_size=64
         )
@@ -145,7 +145,6 @@ def main(model_name, backend='hf', gpu=0):
         torch.cuda.empty_cache()
         torch.cuda.nvtx.range_push('{} batch {} input_length {} output_length {}'.format(model_name, batch, input_length, output_length))
         # prepare inputs
-        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
         
         input_ids = [[666] * input_length] * batch
         input_ids_t = torch.tensor(input_ids, device=device)
@@ -221,5 +220,5 @@ if __name__ == "__main__":
 
     # main('/share/chenkangdi/public_model/models--facebook--opt-13b', 'hf')
     # main('/share/chenkangdi/public_model/models--facebook--opt-13b', 'ours')
-    main('/share/huangshan/opt-6.7b/', 'hf')
-    main('/share/huangshan/opt-6.7b/', 'ours')
+    main('/home/public/models/opt-6.7b/', 'hf')
+    main('/home/public/models/opt-6.7b/', 'ours')

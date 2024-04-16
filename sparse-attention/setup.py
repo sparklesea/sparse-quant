@@ -9,10 +9,13 @@ from torch.utils.cpp_extension import BuildExtension, CUDAExtension, CppExtensio
 #     "nvcc": ["-O3", "-std=c++17", "--generate-line-info", "-Xptxas=-v",
 #              "-U__CUDA_NO_HALF_OPERATORS__", "-U__CUDA_NO_HALF_CONVERSIONS__"],
 # }
+# extra_compile_args = {
+#     "cxx": ["-g", "-O3", "-fopenmp", "-lgomp"],
+#     "nvcc": ["-O3"],
+# }
 extra_compile_args = {
-    "cxx": ["-g", "-O3", "-fopenmp", "-lgomp"],
-    "nvcc": ["-O3"],
-}
+    'cxx': ['-O3', '-fopenmp', '-lgomp'],
+    '/opt/cu-bridge/CUDA_DIR/bin/nvcc': ['-O3', '--generate-line-info', '-Xptxas=-v','-U__CUDA_NO_HALF_OPERATORS__']}
 
 setup(
     name="playground",
@@ -37,6 +40,7 @@ setup(
                 "playground/kernels/csrc/src/block_sparse_attention_lut.cu",
             ],
             extra_compile_args=extra_compile_args,
+            include_dirs=["/opt/cu-bridge/CUDA_DIR/include", "/opt/maca/tools/cu-bridge/include"],
         ),
     ],
     cmdclass={
