@@ -21,6 +21,7 @@ def OPTAttention_block_sparse_lut_forward(
         attention_mask: Optional[torch.Tensor] = None,
         layer_head_mask: Optional[torch.Tensor] = None,
         output_attentions: bool = False,
+        key_padding_mask: Optional[torch.BoolTensor] = None,
     ) -> Tuple[torch.Tensor, Optional[torch.Tensor], Optional[Tuple[torch.Tensor]]]:
         """Input shape: Batch x Time x Channel"""
 
@@ -79,7 +80,7 @@ def OPTAttention_block_sparse_lut_forward(
         # print(f"v shape is: {v.shape}")
         # print(f"lut shape is: {lut.shape}")
         # print(lut[0][31])
-        attn_output = self.efficent_attention(q, k, v, self.scaling, lut, self.block_size, self.block_size).half()
+        attn_output = self.efficent_attention(q, k, v, self.scaling, lut, True, self.block_size, self.block_size).half()
         # print(f"attn_output shape is: {attn_output.shape}")
 
         if not output_attentions:
