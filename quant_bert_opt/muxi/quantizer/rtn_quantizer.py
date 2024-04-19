@@ -1,6 +1,6 @@
 import torch
 from quantizer.base_quantizer import BaseQuantizer
-from huangshan.project.quant_bert_opt.utils.quant_funcs import pseudo_quantize_tensor
+from utils.quant_funcs import pseudo_quantize_tensor
 
 
 class RTNQuantizer(BaseQuantizer):

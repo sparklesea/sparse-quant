@@ -1,9 +1,8 @@
 import torch
 from torch import nn
 from functools import partial
-from huangshan.project.quant_bert_opt.utils.quant_funcs import pseudo_quantize_tensor
-from quant_bert_opt.utils.quant_dequant_nvidia import quant_lmdeploy
-from inficom import gemm_awq_ut
+from utils.quant_funcs import pseudo_quantize_tensor, quant_muxi
+from quant import gemm_awq_ut
 
 
 class WALinear(nn.Module):
@@ -63,23 +62,23 @@ class WALinear(nn.Module):
 
         if torch.any(torch.isnan(x)):
             exit(0)
-        print("========================================================")
-        print("x: ", x, x.shape, x.dtype)
-        print("temp_weight: ", temp_weight, temp_weight.shape, temp_weight.dtype)
-        print("zeros_scales: ", self.zeros_scales, self.zeros_scales.shape, self.zeros_scales.dtype)
+        # print("========================================================")
+        # print("x: ", x, x.shape, x.dtype)
+        # print("temp_weight: ", temp_weight, temp_weight.shape, temp_weight.dtype)
+        # print("zeros_scales: ", self.zeros_scales, self.zeros_scales.shape, self.zeros_scales.dtype)
 
         y = gemm_awq_ut(x,temp_weight,self.zeros_scales,x.shape[-2],
                         self.out_features, self.in_features, self.group_size) + self.bias
-        print("y: ", y, y.shape, y.dtype)
-        torch.save(x, '/home/huangshan/huangshan/project/sparse-quant/quantization/nvidia/script/x.pt')
-        torch.save(temp_weight, '/home/huangshan/huangshan/project/sparse-quant/quantization/nvidia/script/weight.pt')
-        torch.save(self.zeros_scales, '/home/huangshan/huangshan/project/sparse-quant/quantization/nvidia/script/zeros_scales.pt')
+        # print("y: ", y, y.shape, y.dtype)
+        # torch.save(x, '/home/huangshan/huangshan/project/sparse-quant/quantization/nvidia/script/x.pt')
+        # torch.save(temp_weight, '/home/huangshan/huangshan/project/sparse-quant/quantization/nvidia/script/weight.pt')
+        # torch.save(self.zeros_scales, '/home/huangshan/huangshan/project/sparse-quant/quantization/nvidia/script/zeros_scales.pt')
         if torch.any(torch.isnan(y)):
             # torch.save(x, '/home/huangshan/huangshan/project/sparse-quant/quantization/nvidia/script/x.pt')
             # torch.save(temp_weight, '/home/huangshan/huangshan/project/sparse-quant/quantization/nvidia/script/weight.pt')
             # torch.save(self.zeros_scales, '/home/huangshan/huangshan/project/sparse-quant/quantization/nvidia/script/zeros_scales.pt')
             exit(0)
-        print("========================================================")
+        # print("========================================================")
         return y
 
     @staticmethod
@@ -89,9 +88,10 @@ class WALinear(nn.Module):
         new_module = WALinear(module.in_features, module.out_features, w_config, a_config, w_bit=w_config['n_bit'],
                               bias=module.bias is not None, quantize_output=quantize_output, dev=module.weight.device, dtype=torch.uint8)
         # new_module.weight, new_module.zeros_scales = pseudo_quantize_tensor(module.weight, inplace=True, **w_config)
-        new_module.weight, new_module.zeros_scales, _ = quant_lmdeploy(module.weight, module.in_features, module.out_features, w_config['group_size'])
-        # print("quant weight shape: ", new_module.weight.shape)
-        # print("quant zeros_scales shape: ", new_module.zeros_scales.shape)
+        new_module.weight, new_module.zeros_scales = quant_muxi(module.weight, module.in_features, module.out_features,
+                                                                n_bit=w_config['n_bit'], group_size=w_config['group_size'])
+        print("quant weight shape: ", new_module.weight.shape)
+        print("quant zeros_scales shape: ", new_module.zeros_scales.shape)
 
         if module.bias is not None:
             new_module.bias = module.bias.unsqueeze(0)

@@ -48,7 +48,7 @@ def build_model_and_enc(model_path, use_flash_attn, kv_bit=16, kv_group_size=128
 
     return model, enc
 
-model_path = '/home/huangshan/huangshan/project/quant_bert_opt/quantized_model'
+model_path = '/home/huangshan/project/sparse-quant/sparse-quant/quant_bert_opt/muxi/quantized_model'
 model, enc = build_model_and_enc(model_path, False, 16, 128)
 
 for i in range(32):

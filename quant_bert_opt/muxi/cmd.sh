@@ -10,4 +10,6 @@ CUDA_VISIBLE_DEVICES=0 python main_opt.py --model_path /share/huangshan/opt-6.7b
 #quant+sparse
 CUDA_VISIBLE_DEVICES=0 python main_opt.py --model_path /share/huangshan/opt-6.7b --tasks lambada_standard --mask_path masks/opt.pt --rep_file rep_file/facebook_opt-6.7b-smooth.pt --w_bit 4 --a_bit 8 --w_group_size 64 --a_group_size 64
 
-CUDA_VISIBLE_DEVICES=1 python main_opt.py --model_path /share/huangshan/opt-6.7b --mask_path masks/opt.pt --rep_file rep_file/facebook_opt-6.7b-smooth.pt --w_bit 4 --w_group_size 64 --output_path /home/huangshan/huangshan/project/quant_bert_opt/quantized_model
+CUDA_VISIBLE_DEVICES=1 python main_opt.py --model_path /home/public/models/opt-6.7b --w_bit 4 --w_group_size 128 --output_path /home/huangshan/project/sparse-quant/sparse-quant/quant_bert_opt/muxi/quantized_model
+
+CUDA_VISIBLE_DEVICES=1 python main_opt.py --model_path /home/huangshan/project/sparse-quant/quant_bert_opt/muxi/quantized_model --w_bit 4 --w_group_size 128 --quantized --tasks lambada_standard

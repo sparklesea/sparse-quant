@@ -228,7 +228,7 @@ class OPTAttention(nn.Module):
 
         # get query proj
         if (not self._is_flash_attn) and (not self._is_flash_attn_triton) and (not self._is_flash_attn_triton_decode):
-            print("@@@@@@@@@@@@@@@@@@@")
+            # print("@@@@@@@@@@@@@@@@@@@")
             query_states = self.q_proj(hidden_states) * self.scaling
         else:
             query_states = self.q_proj(hidden_states)
@@ -243,13 +243,13 @@ class OPTAttention(nn.Module):
             value_states = self._shape(self.v_proj(key_value_states), -1, bsz)
         elif past_key_value is not None:
             # reuse k, v, self_attention
-            print("#########others#########")
+            # print("#########others#########")
             key_states = self._shape(self.k_proj(hidden_states), -1, bsz)
             value_states = self._shape(self.v_proj(hidden_states), -1, bsz)
             key_states = torch.cat([past_key_value[0], key_states], dim=2)
             value_states = torch.cat([past_key_value[1], value_states], dim=2)
         else:
-            print("#########first#########")
+            # print("#########first#########")
             # self_attention
             key_states = self._shape(self.k_proj(hidden_states), -1, bsz)
             value_states = self._shape(self.v_proj(hidden_states), -1, bsz)

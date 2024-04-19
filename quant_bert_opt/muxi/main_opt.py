@@ -21,6 +21,7 @@ parser.add_argument("--kv_bit", type=int, default=16)
 parser.add_argument("--rep_file", type=str, default=None)
 parser.add_argument("--mask_path", type=str, default=None)
 parser.add_argument("--quantized", action="store_true")
+parser.add_argument("--lut_path", type=str, default=None)
 args = parser.parse_args()
 
 
