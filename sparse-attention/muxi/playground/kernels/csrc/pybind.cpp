@@ -7,8 +7,8 @@
 #include "src/block_sparse_attention_lut.h"
 
 PYBIND11_MODULE(TORCH_EXTENSION_NAME, m) {
-    m.def("sparse_attention_prefill_warp", &sparse_attention_prefill_warp);
-    m.def("sparse_attention_prefill", &sparse_attention_prefill);
     m.def("add", &add);
+    m.def("sparse_attention_prefill_p", &sparse_attention_prefill_p);
+    m.def("sparse_attention_prefill_p_64", &sparse_attention_prefill_p_64);
 }
 
