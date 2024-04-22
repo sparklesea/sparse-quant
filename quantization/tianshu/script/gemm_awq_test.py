@@ -1,6 +1,6 @@
 import torch
 
-from quant_dequant_muxi import quant_muxi as quant_func
+from quant_dequant_tianshu import quant_tianshu as quant_func
 
 # from quant import gemm_awq_ut, gemm_awq_residual_ut, gemm_awq_silu_dot_ut
 from quant import gemm_awq_ut
@@ -38,6 +38,32 @@ algo_id = args.algo_id
 if (algo_id < 0 or algo_id > 3):
     raise Exception("algo_id, must be in range of [0, 3]")
 
+def apply_index(weight):
+    org_shape = weight.shape
+    idx = [
+        [ 0.,  1.,  2.,  3.,  4.,  5.,  6.,  7.,  8.,  9., 10., 11., 12., 13., 14., 15.],
+        [ 0.,  1.,  2.,  3.,  4.,  5.,  6.,  7.,  8.,  9., 10., 11., 12., 13., 14., 15.],
+        [ 0.,  1.,  2.,  3.,  4.,  5.,  6.,  7.,  8.,  9., 10., 11., 12., 13., 14., 15.],
+        [ 0.,  1.,  2.,  3.,  4.,  5.,  6.,  7.,  8.,  9., 10., 11., 12., 13., 14., 15.],
+        [ 4.,  5.,  6.,  7.,  0.,  1.,  2.,  3., 12., 13., 14., 15.,  8.,  9., 10., 11.],
+        [ 4.,  5.,  6.,  7.,  0.,  1.,  2.,  3., 12., 13., 14., 15.,  8.,  9., 10., 11.],
+        [ 4.,  5.,  6.,  7.,  0.,  1.,  2.,  3., 12., 13., 14., 15.,  8.,  9., 10., 11.],
+        [ 4.,  5.,  6.,  7.,  0.,  1.,  2.,  3., 12., 13., 14., 15.,  8.,  9., 10., 11.],
+        [ 8.,  9., 10., 11., 12., 13., 14., 15.,  0.,  1.,  2.,  3.,  4.,  5., 6.,  7.],
+        [ 8.,  9., 10., 11., 12., 13., 14., 15.,  0.,  1.,  2.,  3.,  4.,  5., 6.,  7.],
+        [ 8.,  9., 10., 11., 12., 13., 14., 15.,  0.,  1.,  2.,  3.,  4.,  5., 6.,  7.],
+        [ 8.,  9., 10., 11., 12., 13., 14., 15.,  0.,  1.,  2.,  3.,  4.,  5., 6.,  7.],
+        [12., 13., 14., 15.,  8.,  9., 10., 11.,  4.,  5.,  6.,  7.,  0.,  1., 2.,  3.],
+        [12., 13., 14., 15.,  8.,  9., 10., 11.,  4.,  5.,  6.,  7.,  0.,  1., 2.,  3.],
+        [12., 13., 14., 15.,  8.,  9., 10., 11.,  4.,  5.,  6.,  7.,  0.,  1., 2.,  3.],
+        [12., 13., 14., 15.,  8.,  9., 10., 11.,  4.,  5.,  6.,  7.,  0.,  1., 2.,  3.]
+    ]
+
+    idx = torch.tensor(idx).to(torch.long).cuda()
+    idx = idx.reshape(1, -1).repeat(weight.numel()/64).reshape(-1, 16)
+    weight = torch.gather(weight.reshape(-1, 16), 1, idx)
+    return weight.reshape(org_shape).transpose(0, 1).contiguous()
+
 def ref_func():
     torch_quant_output = torch.matmul(x, weight_fp16.t())
     # if (algo_id == 1):
@@ -51,16 +77,8 @@ def inf_func():
     # if (algo_id == 0):
     infini_output = gemm_awq_ut(x, qweight, zeros_scales,
                             BS * SEQ, DIM2, DIM1, GROUP_SIZE)
-    # if (algo_id == 1):
-    #     infini_output = gemm_awq_residual_ut(x, qweight, zeros_scales, r,
-    #                         BS * SEQ, DIM2, DIM1, GROUP_SIZE)
-    # if (algo_id == 2):
-    #     infini_output = gemm_awq_silu_dot_ut(x, qweight, qweight2, 
-    #                         zeros_scales, zeros_scales2, None, None, 
-    #                         BS * SEQ, DIM2, DIM1, GROUP_SIZE)
-    # if (algo_id == 3):
-    #     infini_output = gemm_awq_silu_dot_ut(x, None, None, None, None, qweight13, zeros_scales13,
-    #                         BS * SEQ, DIM2, DIM1, GROUP_SIZE)
+    # infini_out = apply_index(infini_out)
+    
     return infini_output
 
 AlgoList = [
@@ -98,8 +116,8 @@ for BS,SEQ,DIM1,DIM2 in Configs:
     infini_out = inf_func()
 
     # print("weight: ", weight_fp16)
-    # print("ref_out: ", ref_out)
-    # print("infini_opt: ", infini_out)
+    print("ref_out: ", ref_out)
+    print("infini_opt: ", infini_out)
 
     all_close = torch.allclose(ref_out, infini_out.reshape((BS, SEQ, DIM2)), atol=2e-2, rtol=2e-2)
     max_bias = (abs(ref_out - infini_out.reshape((BS, SEQ, DIM2)))).max()

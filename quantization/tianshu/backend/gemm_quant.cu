@@ -9,24 +9,44 @@
 
 #include "w4a16_gemm.cuh"
 
-void test_wmma(at::Tensor A, at::Tensor B, at::Tensor C,
-                    const int M_TOTAL, const int N_TOTAL, const int K_TOTAL){
+void test_wmma_float(at::Tensor A, at::Tensor B, at::Tensor C){
+    const int warp_size = 64;
+    const int M = 16, N = 16, K = 16;
+	dim3 gridDim, blockDim;
+	// 16 warps in one block
+
+    WMMAF16TensorCore<<<(1, 1), (256)>>>(
+        reinterpret_cast<float *>(A.data_ptr()), 
+        reinterpret_cast<float *>(B.data_ptr()), 
+        reinterpret_cast<float *>(C.data_ptr()));
+}
+
+void test_wmma_32(at::Tensor A, at::Tensor B, at::Tensor C){
     const int warp_size = 64;
     const int M = 16, N = 16, K = 32;
 	dim3 gridDim, blockDim;
 	// 16 warps in one block
-	blockDim.x = 4 * WARP_SIZE; 
-	blockDim.y = 4;
 
-	gridDim.x = (M_TOTAL + (M * blockDim.x / warp_size - 1)) / (M * blockDim.x / warp_size);
-	gridDim.y = (N_TOTAL + N * blockDim.y - 1) / (N * blockDim.y);
-
-    WMMAF16TensorCore<<<gridDim, blockDim>>>(
+    WMMAF16TensorCore_32<<<(1, 1), (64)>>>(
         reinterpret_cast<half *>(A.data_ptr<at::Half>()), 
         reinterpret_cast<half *>(B.data_ptr<at::Half>()), 
-        reinterpret_cast<float *>(C.data_ptr()),
-        M, N, K, M_TOTAL, N_TOTAL, K_TOTAL);
+        reinterpret_cast<float *>(C.data_ptr()));
 }
+
+void test_wmma(at::Tensor A, at::Tensor B, at::Tensor C){
+    const int warp_size = 64;
+    const int M = 16, N = 16, K = 16;
+	dim3 gridDim, blockDim;
+	// 16 warps in one block
+
+    WMMAF16TensorCore<<<(1, 1), (128)>>>(
+        reinterpret_cast<float *>(A.data_ptr()), 
+        reinterpret_cast<float *>(B.data_ptr()), 
+        reinterpret_cast<float *>(C.data_ptr()),
+        M, N, K,
+        A.size(0), B.size(1), B.size(0));
+}
+
 
 
 void w4a16_gemm(at::Tensor X, at::Tensor W, at::Tensor zeros_scales,
@@ -68,8 +88,9 @@ void w4a16_gemm(at::Tensor X, at::Tensor W, at::Tensor zeros_scales,
     } 
     else {
         // speedup for batch size 1 to 16
-        w4a16_gemm_wmma_kernel_32<16, 16, 256, 264, 24>
-            <<<dim3(DIV_UP(dim_out, 16), DIV_UP(bs, 16)), dim3(256, 1)>>>(
+        // w4a16_gemm_wmma_kernel_32<16, 16, 256, 264, 24>
+        w4a16_gemm_wmma_kernel_float<16, 16, 256, 264, 24>
+            <<<dim3(DIV_UP(dim_out, 16), DIV_UP(bs, 16)), dim3(256)>>>(
                 reinterpret_cast<uint32_t *>(W.data_ptr()),
                 reinterpret_cast<half2 *>(zeros_scales.data_ptr<at::Half>()),
                 reinterpret_cast<half *>(X.data_ptr<at::Half>()),

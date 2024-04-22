@@ -16,5 +16,8 @@ at::Tensor gemm_awq_ut(at::Tensor I, at::Tensor W, at::Tensor W_zeros_scales,
                        const int M, const int N, const int K,
                        const int group_size);
 
-void test_wmma(at::Tensor A, at::Tensor B, at::Tensor C,
-                    const int M_TOTAL, const int N_TOTAL, const int K_TOTAL);
+void test_wmma_float(at::Tensor A, at::Tensor B, at::Tensor C);
+
+void test_wmma_32(at::Tensor A, at::Tensor B, at::Tensor C);
+
+void test_wmma(at::Tensor A, at::Tensor B, at::Tensor C);

@@ -1,16 +1,16 @@
 import torch
 
 # W4A16 reformat quant param
-def quant_muxi(weight, input_features, output_features, group_size):
-    qweight, zeros_scales = generate_quant_muxi(weight, input_features, group_size)
-    fp16_weight_dequant = dequant_to_fp16_muxi(qweight, zeros_scales, group_size)
+def quant_tianshu(weight, input_features, output_features, group_size):
+    qweight, zeros_scales = generate_quant_tianshu(weight, input_features, group_size)
+    fp16_weight_dequant = dequant_to_fp16_tianshu(qweight, zeros_scales, group_size)
 
     reformat_weight = weight.reshape(-1, 4, 2).permute(0, 2, 1).reshape(output_features, input_features).clone()
-    qweight, zeros_scales = generate_quant_muxi(reformat_weight, input_features, group_size)
+    qweight, zeros_scales = generate_quant_tianshu(reformat_weight, input_features, group_size)
 
     return qweight, zeros_scales, fp16_weight_dequant
 
-def quantize_tensor_muxi(w, n_bit, q_group_size):
+def quantize_tensor_tianshu(w, n_bit, q_group_size):
     org_w_shape = w.shape
     if q_group_size > 0:
         assert org_w_shape[-1] % q_group_size == 0
@@ -30,7 +30,7 @@ def quantize_tensor_muxi(w, n_bit, q_group_size):
     zeros = zeros.reshape(org_w_shape[0], -1)
     return w, scales, zeros
 
-def write_4bit_tensor_muxi(w_q):
+def write_4bit_tensor_tianshu(w_q):
     w_q_org_shape = w_q.shape
     w_q = w_q.type(torch.uint8).reshape(-1, 2)
     w_int4 = torch.zeros(w_q.shape[0], 1, dtype=torch.uint8, device=w_q.device)
@@ -44,7 +44,7 @@ def write_4bit_tensor_muxi(w_q):
     return w_int4.reshape(new_shape)
 
 # NOTE: real little-endian
-def deq_4bit_tensor_muxi(w_int4):
+def deq_4bit_tensor_tianshu(w_int4):
     w_int4_org_shape = w_int4.shape
     new_shape = w_int4_org_shape[:-1] + (w_int4_org_shape[-1] * 8 // 4,)
     w_int4 = w_int4.reshape(-1, 1)
@@ -55,7 +55,7 @@ def deq_4bit_tensor_muxi(w_int4):
 
     return w_q.reshape(new_shape)
 
-def generate_quant_muxi(weight_fp16, input_features, group_size):
+def generate_quant_tianshu(weight_fp16, input_features, group_size):
 
     # quantize weight
     intweight = []
@@ -63,8 +63,8 @@ def generate_quant_muxi(weight_fp16, input_features, group_size):
     scales = []
 
     end = input_features
-    qweight_temp, scales_temp, zeros_temp = quantize_tensor_muxi(weight_fp16[:, :end], 4, group_size)
-    intweight.append(write_4bit_tensor_muxi(qweight_temp))
+    qweight_temp, scales_temp, zeros_temp = quantize_tensor_tianshu(weight_fp16[:, :end], 4, group_size)
+    intweight.append(write_4bit_tensor_tianshu(qweight_temp))
     scales.append(scales_temp)
     zeros.append(zeros_temp)
 
@@ -84,11 +84,11 @@ def generate_quant_muxi(weight_fp16, input_features, group_size):
 
     return qweight, zeros_scales
 
-def dequant_to_fp16_muxi(qweight, zeros_scales, group_size):
+def dequant_to_fp16_tianshu(qweight, zeros_scales, group_size):
     out_features = qweight.shape[0]
     in_features = qweight.shape[1] * 2
 
-    fp16_weight = deq_4bit_tensor_muxi(qweight).reshape(-1, group_size)
+    fp16_weight = deq_4bit_tensor_tianshu(qweight).reshape(-1, group_size)
     zeros_scales = zeros_scales.reshape(-1, 2)
     zeros = zeros_scales[:, 0].reshape(-1, 1) - 64
     scales = zeros_scales[:, 1].reshape(-1, 1)
