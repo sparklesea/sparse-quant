@@ -41,6 +41,14 @@ def main():
         model, _ = set_static_attention_rule(
             model, args.mask_path, model_layers=model.model.decoder.layers
         )
+    if args.lut_path is not None:
+        from playground.models.opt.modeling_opt import OPTModel_use_block_sparse_attention_lut
+        from module.mask.sparse_attention import set_static_attention_lut
+
+        print("use lut")
+        model.model.decoder.use_block_sparse_attention_lut = OPTModel_use_block_sparse_attention_lut.__get__(model.model.decoder)
+        model.model.decoder.use_block_sparse_attention_lut()
+        set_static_attention_lut(args.lut_path, None, model.model.decoder.layers, 64)
     model=model.cuda()
     if not args.quantized:
         if args.w_bit<16 or args.a_bit<16:

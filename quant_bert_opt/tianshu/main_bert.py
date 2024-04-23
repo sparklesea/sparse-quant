@@ -17,6 +17,7 @@ parser.add_argument("--a_bit", type=int, default=16)
 parser.add_argument("--kv_group_size", type=int, default=64)
 parser.add_argument("--kv_bit", type=int, default=16)
 parser.add_argument("--mask_path", type=str, default=None)  # /share/liutengxuan/NLP-playground/examples/sparse_attention/model/bert/bigbird_pattern_24_16_512_512.pt")
+parser.add_argument('--lut_path', type=str, default=None)
 args = parser.parse_args()
 
 enc = AutoTokenizer.from_pretrained("bert-large-cased")
@@ -56,7 +57,7 @@ def collate_fn(data):
 
 eval_dataset = eval_dataset.map(tokenize_function, batched=True).shuffle(seed=42)
 eval_dataloader = DataLoader(eval_dataset, batch_size=1, collate_fn=collate_fn)
-model = BertForNextSentencePrediction.from_pretrained(args.model_path)
+model = BertForNextSentencePrediction.from_pretrained(args.model_path).half()
 
 
 if args.mask_path is not None:
@@ -66,6 +67,14 @@ if args.mask_path is not None:
     model.bert.use_static_attention()
     print("Using sparse mask {}".format(args.mask_path))
     model.bert.set_static_attention_mask(args.mask_path)
+if args.lut_path is not None:
+    from module.bert.modeling_bert import BertModel_use_block_sparse_attention_lut
+    from module.mask.sparse_attention import set_static_attention_lut
+
+    model.bert.use_static_attention = BertModel_use_block_sparse_attention_lut.__get__(model.bert)
+    model.bert.use_static_attention()
+    print("Using sparse lut {}".format(args.lut_path))
+    set_static_attention_lut(args.lut_path, None, model.bert.encoder.layer, 64)
 # for i in range(24):
 #     model.bert.encoder.layer[i].intermediate.intermediate_act_fn = GeLUTable(lim=3, n_bit=8)
 # model.bert.pooler.activation = TanhTable(lim=3, n_bit=8)

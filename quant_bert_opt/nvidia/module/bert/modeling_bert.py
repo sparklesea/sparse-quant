@@ -328,116 +328,125 @@ def BertModel_use_static_attention(self):
 
 # end sparse attention mask
 
-# # begin sparse attention lut
-# from playground.kernels.block_sparse_attention_lut import sparse_attention
+# begin sparse attention lut
+from playground.kernels.block_sparse_attention_lut import sparse_attention
 
 
-# def BertAttention_block_sparse_lut_forward(
-#     self,
-#     hidden_states: torch.Tensor,
-#     attention_mask: Optional[torch.FloatTensor] = None,
-#     head_mask: Optional[torch.FloatTensor] = None,
-#     encoder_hidden_states: Optional[torch.FloatTensor] = None,
-#     encoder_attention_mask: Optional[torch.FloatTensor] = None,
-#     past_key_value: Optional[Tuple[Tuple[torch.FloatTensor]]] = None,
-#     output_attentions: Optional[bool] = False,
-# ) -> Tuple[torch.Tensor]:
-#     mixed_query_layer = self.query(hidden_states)
+def BertAttention_block_sparse_lut_forward(
+    self,
+    hidden_states: torch.Tensor,
+    attention_mask: Optional[torch.FloatTensor] = None,
+    head_mask: Optional[torch.FloatTensor] = None,
+    encoder_hidden_states: Optional[torch.FloatTensor] = None,
+    encoder_attention_mask: Optional[torch.FloatTensor] = None,
+    past_key_value: Optional[Tuple[Tuple[torch.FloatTensor]]] = None,
+    output_attentions: Optional[bool] = False,
+) -> Tuple[torch.Tensor]:
+    mixed_query_layer = self.query(hidden_states)
 
-#     # If this is instantiated as a cross-attention module, the keys
-#     # and values come from an encoder; the attention mask needs to be
-#     # such that the encoder's padding tokens are not attended to.
-#     is_cross_attention = encoder_hidden_states is not None
+    # If this is instantiated as a cross-attention module, the keys
+    # and values come from an encoder; the attention mask needs to be
+    # such that the encoder's padding tokens are not attended to.
+    is_cross_attention = encoder_hidden_states is not None
 
-#     if is_cross_attention and past_key_value is not None:
-#         # reuse k,v, cross_attentions
-#         key_layer = past_key_value[0]
-#         value_layer = past_key_value[1]
-#         attention_mask = encoder_attention_mask
-#     elif is_cross_attention:
-#         key_layer = self.transpose_for_scores(self.key(encoder_hidden_states))
-#         value_layer = self.transpose_for_scores(self.value(encoder_hidden_states))
-#         attention_mask = encoder_attention_mask
-#     elif past_key_value is not None:
-#         key_layer = self.transpose_for_scores(self.key(hidden_states))
-#         value_layer = self.transpose_for_scores(self.value(hidden_states))
-#         key_layer = torch.cat([past_key_value[0], key_layer], dim=2)
-#         value_layer = torch.cat([past_key_value[1], value_layer], dim=2)
-#     else:
-#         key_layer = self.transpose_for_scores(self.key(hidden_states))
-#         value_layer = self.transpose_for_scores(self.value(hidden_states))
+    if is_cross_attention and past_key_value is not None:
+        # reuse k,v, cross_attentions
+        key_layer = past_key_value[0]
+        value_layer = past_key_value[1]
+        attention_mask = encoder_attention_mask
+    elif is_cross_attention:
+        key_layer = self.transpose_for_scores(self.key(encoder_hidden_states))
+        value_layer = self.transpose_for_scores(self.value(encoder_hidden_states))
+        attention_mask = encoder_attention_mask
+    elif past_key_value is not None:
+        key_layer = self.transpose_for_scores(self.key(hidden_states))
+        value_layer = self.transpose_for_scores(self.value(hidden_states))
+        key_layer = torch.cat([past_key_value[0], key_layer], dim=2)
+        value_layer = torch.cat([past_key_value[1], value_layer], dim=2)
+    else:
+        key_layer = self.transpose_for_scores(self.key(hidden_states))
+        value_layer = self.transpose_for_scores(self.value(hidden_states))
 
-#     query_layer = self.transpose_for_scores(mixed_query_layer)
+    query_layer = self.transpose_for_scores(mixed_query_layer)
 
-#     use_cache = past_key_value is not None
-#     if self.is_decoder:
-#         # if cross_attention save Tuple(torch.Tensor, torch.Tensor) of all cross attention key/value_states.
-#         # Further calls to cross_attention layer can then reuse all cross-attention
-#         # key/value_states (first "if" case)
-#         # if uni-directional self-attention (decoder) save Tuple(torch.Tensor, torch.Tensor) of
-#         # all previous decoder key/value_states. Further calls to uni-directional self-attention
-#         # can concat previous decoder key/value_states to current projected key/value_states (third "elif" case)
-#         # if encoder bi-directional self-attention `past_key_value` is always `None`
-#         past_key_value = (key_layer, value_layer)
+    use_cache = past_key_value is not None
+    if self.is_decoder:
+        # if cross_attention save Tuple(torch.Tensor, torch.Tensor) of all cross attention key/value_states.
+        # Further calls to cross_attention layer can then reuse all cross-attention
+        # key/value_states (first "if" case)
+        # if uni-directional self-attention (decoder) save Tuple(torch.Tensor, torch.Tensor) of
+        # all previous decoder key/value_states. Further calls to uni-directional self-attention
+        # can concat previous decoder key/value_states to current projected key/value_states (third "elif" case)
+        # if encoder bi-directional self-attention `past_key_value` is always `None`
+        past_key_value = (key_layer, value_layer)
 
-#     assert self.position_embedding_type != "relative_key" and self.position_embedding_type != "relative_key_query", "relative attention is not supported"
-#     ### efficient attention implementation ###
-#     context_layer = self.efficent_attention(
-#         # for prefill
-#         query_layer,
-#         key_layer,
-#         value_layer,
-#         self.head_dim**-0.5,
-#         self.lut,
-#         self.block_size,
-#         self.block_size,
-#         # for decode
-#         attention_mask,
-#         self.attention_dropout if self.training else 0.0,  # noqa
-#     )
-#     ### end efficient attention implementation ###
+    assert self.position_embedding_type != "relative_key" and self.position_embedding_type != "relative_key_query", "relative attention is not supported"
+    ### efficient attention implementation ###
+    if query_layer.dtype != torch.float16:
+        query_layer = query_layer.to(torch.float16)
+    if key_layer.dtype != torch.float16:
+        key_layer = key_layer.to(torch.float16)
+    if value_layer.dtype != torch.float16:
+        value_layer = value_layer.to(torch.float16)
+    context_layer = self.efficent_attention(
+        # for prefill
+        query_layer,
+        key_layer,
+        value_layer,
+        self.attention_head_size**-0.5,
+        self.lut,
+        False,
+        self.block_size,
+        self.block_size,
+        # for decode
+        # attention_mask,
+        # self.attention_dropout if self.training else 0.0,  # noqa
+    )
+    # context_layer = context_layer.to(torch.float32)
+    # print(query_layer.shape, key_layer.shape, value_layer.shape, context_layer.shape)
+    ### end efficient attention implementation ###
 
-#     context_layer = context_layer.permute(0, 2, 1, 3).contiguous()
-#     new_context_layer_shape = context_layer.size()[:-2] + (self.all_head_size,)
-#     context_layer = context_layer.view(new_context_layer_shape)
+    context_layer = context_layer.permute(0, 2, 1, 3).contiguous()
+    new_context_layer_shape = context_layer.size()[:-2] + (self.all_head_size,)
+    context_layer = context_layer.view(new_context_layer_shape)
 
-#     # outputs = (context_layer, attention_probs) if output_attentions else (context_layer,)
-#     assert output_attentions == False, "output_attentions is not supported"
-#     outputs = (context_layer,)
+    # outputs = (context_layer, attention_probs) if output_attentions else (context_layer,)
+    assert output_attentions == False, "output_attentions is not supported"
+    outputs = (context_layer,)
 
-#     if self.is_decoder:
-#         outputs = outputs + (past_key_value,)
-#     return outputs
-
-
-# def BertDecoderLayer_set_static_attention_lut(self, lut, lut_for_head, block_size: int, device: str = "cuda"):
-#     """
-#     Set the attention layout of the decoder layer
-
-#     lut: a tuple has 'layer' elements, each element has the size of [lut_num_heads, num_block, nnz]
-#     lut_for_head: a tuple has 'layer' elements, each element has the size of [lut_num_heads]
-#                   we use it as an indicator when combine heads
-#     block_size: int
-#     device: str
-#     """
-#     # self.self_attn.efficent_attention = sparse_attention_prefill
-#     self.self_attn.efficent_attention = sparse_attention
-#     self.self_attn.lut = lut
-#     self.self_attn.lut_for_head = lut_for_head
-#     self.self_attn.block_size = block_size
+    if self.is_decoder:
+        outputs = outputs + (past_key_value,)
+    return outputs
 
 
-# def BertModel_use_block_sparse_attention_lut(self):
-#     """
-#     Set the model instance to use efficient attention instead of llama attention
-#     """
+def BertDecoderLayer_set_static_attention_lut(self, lut, lut_for_head, block_size: int, device: str = "cuda"):
+    """
+    Set the attention layout of the decoder layer
 
-#     for layer in self.layer:
-#         layer.attention.self.forward = MethodType(BertAttention_block_sparse_lut_forward, layer.attention.self)
-#         layer.set_static_attention_lut = MethodType(BertDecoderLayer_set_static_attention_lut, layer)
+    lut: a tuple has 'layer' elements, each element has the size of [lut_num_heads, num_block, nnz]
+    lut_for_head: a tuple has 'layer' elements, each element has the size of [lut_num_heads]
+                  we use it as an indicator when combine heads
+    block_size: int
+    device: str
+    """
+    # self.self_attn.efficent_attention = sparse_attention_prefill
+    self.attention.self.efficent_attention = sparse_attention
+    self.attention.self.lut = lut
+    self.attention.self.lut_for_head = lut_for_head
+    self.attention.self.block_size = block_size
 
 
-# # end sparse attention lut
+def BertModel_use_block_sparse_attention_lut(self):
+    """
+    Set the model instance to use efficient attention instead of llama attention
+    """
+
+    for layer in self.encoder.layer:
+        layer.attention.self.forward = MethodType(BertAttention_block_sparse_lut_forward, layer.attention.self)
+        layer.set_static_attention_lut = MethodType(BertDecoderLayer_set_static_attention_lut, layer)
+
+
+# end sparse attention lut
 
 # # begin grad analysis
 # import deepspeed
