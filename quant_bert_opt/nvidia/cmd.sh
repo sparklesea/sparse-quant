@@ -2,7 +2,7 @@
 # fp16
 CUDA_VISIBLE_DEVICES=0 python main_bert.py --model_path bert_model/bert-large-cased-lambada
 # quant+sparse
-CUDA_VISIBLE_DEVICES=0 python main_bert.py --model_path bert_model/bert-large-cased-lambada --w_bit 4 --a_bit 8 --mask_path masks/bert.pt
+CUDA_VISIBLE_DEVICES=1 python main_bert.py --model_path bert_model/bert-large-cased-lambada --w_bit 4 --lut_path masks/bert_large_lut.pt
 
 # for opt
 #fp16

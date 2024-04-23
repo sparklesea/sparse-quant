@@ -328,26 +328,26 @@ def BertModel_use_static_attention(self):
 
 # end sparse attention mask
 
-# # begin sparse attention lut
-# from playground.kernels.block_sparse_attention_lut import sparse_attention
+# begin sparse attention lut
+from playground.kernels.block_sparse_attention_lut import sparse_attention
 
 
-# def BertAttention_block_sparse_lut_forward(
-#     self,
-#     hidden_states: torch.Tensor,
-#     attention_mask: Optional[torch.FloatTensor] = None,
-#     head_mask: Optional[torch.FloatTensor] = None,
-#     encoder_hidden_states: Optional[torch.FloatTensor] = None,
-#     encoder_attention_mask: Optional[torch.FloatTensor] = None,
-#     past_key_value: Optional[Tuple[Tuple[torch.FloatTensor]]] = None,
-#     output_attentions: Optional[bool] = False,
-# ) -> Tuple[torch.Tensor]:
-#     mixed_query_layer = self.query(hidden_states)
+def BertAttention_block_sparse_lut_forward(
+    self,
+    hidden_states: torch.Tensor,
+    attention_mask: Optional[torch.FloatTensor] = None,
+    head_mask: Optional[torch.FloatTensor] = None,
+    encoder_hidden_states: Optional[torch.FloatTensor] = None,
+    encoder_attention_mask: Optional[torch.FloatTensor] = None,
+    past_key_value: Optional[Tuple[Tuple[torch.FloatTensor]]] = None,
+    output_attentions: Optional[bool] = False,
+) -> Tuple[torch.Tensor]:
+    mixed_query_layer = self.query(hidden_states)
 
-#     # If this is instantiated as a cross-attention module, the keys
-#     # and values come from an encoder; the attention mask needs to be
-#     # such that the encoder's padding tokens are not attended to.
-#     is_cross_attention = encoder_hidden_states is not None
+    # If this is instantiated as a cross-attention module, the keys
+    # and values come from an encoder; the attention mask needs to be
+    # such that the encoder's padding tokens are not attended to.
+    is_cross_attention = encoder_hidden_states is not None
 
 #     if is_cross_attention and past_key_value is not None:
 #         # reuse k,v, cross_attentions

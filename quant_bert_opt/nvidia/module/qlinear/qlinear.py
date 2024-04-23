@@ -61,25 +61,11 @@ class WALinear(nn.Module):
         else:
             temp_weight = self.weight
 
-        # if torch.any(torch.isnan(x)):
-        #     exit(0)
-        # print("========================================================")
-        # print("x: ", x, x.shape, x.dtype)
-        # print("temp_weight: ", temp_weight, temp_weight.shape, temp_weight.dtype)
-        # print("zeros_scales: ", self.zeros_scales, self.zeros_scales.shape, self.zeros_scales.dtype)
-
+        # print("weight: ", temp_weight.shape)
+        # print("x: ", x.shape)
         y = gemm_awq_ut(x,temp_weight,self.zeros_scales,x.shape[-2],
                         self.out_features, self.in_features, self.group_size) + self.bias
-        # print("y: ", y, y.shape, y.dtype)
-        # torch.save(x, '/home/huangshan/huangshan/project/sparse-quant/quantization/nvidia/script/x.pt')
-        # torch.save(temp_weight, '/home/huangshan/huangshan/project/sparse-quant/quantization/nvidia/script/weight.pt')
-        # torch.save(self.zeros_scales, '/home/huangshan/huangshan/project/sparse-quant/quantization/nvidia/script/zeros_scales.pt')
-        # if torch.any(torch.isnan(y)):
-        #     # torch.save(x, '/home/huangshan/huangshan/project/sparse-quant/quantization/nvidia/script/x.pt')
-        #     # torch.save(temp_weight, '/home/huangshan/huangshan/project/sparse-quant/quantization/nvidia/script/weight.pt')
-        #     # torch.save(self.zeros_scales, '/home/huangshan/huangshan/project/sparse-quant/quantization/nvidia/script/zeros_scales.pt')
-        #     exit(0)
-        # print("========================================================")
+        
         return y
 
     @staticmethod
