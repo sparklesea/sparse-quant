@@ -21,3 +21,6 @@ void test_wmma_float(at::Tensor A, at::Tensor B, at::Tensor C);
 void test_wmma_32(at::Tensor A, at::Tensor B, at::Tensor C);
 
 void test_wmma(at::Tensor A, at::Tensor B, at::Tensor C);
+
+
+at::Tensor dequant(at::Tensor W, at::Tensor W_zeros_scales, const int N, const int K, const int group_size);

@@ -9,4 +9,5 @@ PYBIND11_MODULE(quant, m){
   m.def("test_wmma_float", &test_wmma_float);
   m.def("test_wmma_32", &test_wmma_32);
   m.def("test_wmma", &test_wmma);
+  m.def("dequant", &dequant);
 }

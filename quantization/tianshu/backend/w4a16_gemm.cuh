@@ -1055,3 +1055,101 @@ __global__ __forceinline__ void w4a16_gemm_wmma_kernel_float(uint32_t* __restric
         output[gmem_c_addr] = __float2half(smem[smem_c_addr]);
     }
 }
+
+
+__global__ void dequant_W_kernel(
+    uint32_t* __restrict__ qweight, 
+    half2* zeros_scales, 
+    half* __restrict__ W_load, 
+    const int N, const int K, const int group_size
+) {
+    int bx = blockIdx.x;
+
+    int tid = threadIdx.x;
+
+    __shared__ float smem[16 * 256];
+    float* s_b = smem;
+
+    int load_b_smem_n = (tid / 32) * 2;
+    int load_b_smem_k = (tid % 32) * 8;
+
+    int store_w_smem_n = (tid / 32) * 2;
+    int store_w_smem_k = (tid % 32) * 8;
+
+    float* load_b_smem_addrs[2];
+    load_b_smem_addrs[0] = s_b + OFFSET(load_b_smem_n, load_b_smem_k, 256);
+    load_b_smem_addrs[1] = load_b_smem_addrs[0] + 256;
+    float* store_w_smem_addrs[2];
+    store_w_smem_addrs[0] = s_b + OFFSET(store_w_smem_n, store_w_smem_k, 256);
+    store_w_smem_addrs[1] = store_w_smem_addrs[0] + 256;
+
+    int load_b_gmem_n = bx * 16 + load_b_smem_n;
+    int load_b_gmem_k = load_b_smem_k;
+
+    int store_w_gmem_n = bx * 16 + store_w_smem_n;
+    int store_w_gmem_k = store_w_smem_k;
+
+    int load_b_gmem_addr = OFFSET(load_b_gmem_n, load_b_gmem_k / 8, K / 8);
+    int store_w_gmem_addr = OFFSET(store_w_gmem_n, store_w_gmem_k, K);
+
+    uint32_t qweight_reg[2];
+    half weight_reg[16];
+    half2 zeros_scales_reg[2];
+    half* zeros_scales_ptr = reinterpret_cast<half*>(&zeros_scales_reg[0]);
+
+    half temp_load_half[16];
+    float temp_load_float[16];
+
+    for (int bk = 0; bk < K / 256; bk++) {
+        {
+            qweight_reg[0] = qweight[load_b_gmem_addr];
+            qweight_reg[1] = qweight[load_b_gmem_addr + K / 8];
+            int zeros_scales_index = load_b_gmem_n * K / group_size + load_b_gmem_k / group_size;
+            zeros_scales_reg[0] = zeros_scales[zeros_scales_index];
+            zeros_scales_reg[1] = zeros_scales[zeros_scales_index + K / group_size];
+
+            // dequant
+            *(uint4*)(&weight_reg[0]) = dequantize_s4_to_fp16x2_v2(qweight_reg[0]);
+            *(uint4*)(&weight_reg[8]) = dequantize_s4_to_fp16x2_v2(qweight_reg[1]);
+            weight_reg[0] = __hmul(__hsub(weight_reg[0], zeros_scales_ptr[0]), zeros_scales_ptr[1]);
+            weight_reg[1] = __hmul(__hsub(weight_reg[1], zeros_scales_ptr[0]), zeros_scales_ptr[1]);
+            weight_reg[2] = __hmul(__hsub(weight_reg[2], zeros_scales_ptr[0]), zeros_scales_ptr[1]);
+            weight_reg[3] = __hmul(__hsub(weight_reg[3], zeros_scales_ptr[0]), zeros_scales_ptr[1]);
+            weight_reg[4] = __hmul(__hsub(weight_reg[4], zeros_scales_ptr[0]), zeros_scales_ptr[1]);
+            weight_reg[5] = __hmul(__hsub(weight_reg[5], zeros_scales_ptr[0]), zeros_scales_ptr[1]);
+            weight_reg[6] = __hmul(__hsub(weight_reg[6], zeros_scales_ptr[0]), zeros_scales_ptr[1]);
+            weight_reg[7] = __hmul(__hsub(weight_reg[7], zeros_scales_ptr[0]), zeros_scales_ptr[1]);
+
+            weight_reg[8] = __hmul(__hsub(weight_reg[8], zeros_scales_ptr[2]), zeros_scales_ptr[3]);
+            weight_reg[9] = __hmul(__hsub(weight_reg[9], zeros_scales_ptr[2]), zeros_scales_ptr[3]);
+            weight_reg[10] = __hmul(__hsub(weight_reg[10], zeros_scales_ptr[2]), zeros_scales_ptr[3]);
+            weight_reg[11] = __hmul(__hsub(weight_reg[11], zeros_scales_ptr[2]), zeros_scales_ptr[3]);
+            weight_reg[12] = __hmul(__hsub(weight_reg[12], zeros_scales_ptr[2]), zeros_scales_ptr[3]);
+            weight_reg[13] = __hmul(__hsub(weight_reg[13], zeros_scales_ptr[2]), zeros_scales_ptr[3]);
+            weight_reg[14] = __hmul(__hsub(weight_reg[14], zeros_scales_ptr[2]), zeros_scales_ptr[3]);
+            weight_reg[15] = __hmul(__hsub(weight_reg[15], zeros_scales_ptr[2]), zeros_scales_ptr[3]);
+
+            for (int i = 0; i < 8; i++) {
+                temp_load_float[i] = __half2float(weight_reg[i]);
+                temp_load_float[i + 8] = __half2float(weight_reg[i + 8]);
+            }
+            *(uint4*)(load_b_smem_addrs[0]) = *(uint4*)(&temp_load_float[0]);
+            *((uint4*)(load_b_smem_addrs[0])+1) = *(uint4*)(&temp_load_float[4]);
+            *(uint4*)(load_b_smem_addrs[1]) = *(uint4*)(&temp_load_float[8]);
+            *((uint4*)(load_b_smem_addrs[1])+1) = *(uint4*)(&temp_load_float[12]);
+        }
+
+        __syncthreads();
+
+        for (int i = 0; i < 8; i++) {
+            W_load[store_w_gmem_addr + i] = weight_reg[0 + i];
+            W_load[store_w_gmem_addr + K + i] = weight_reg[8 + i];
+        }
+
+        __syncthreads();
+        load_b_gmem_addr += (256 / 8);
+        load_b_gmem_k += 256;
+        store_w_gmem_addr += 256;
+    }
+}
+

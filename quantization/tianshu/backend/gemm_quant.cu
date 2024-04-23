@@ -149,3 +149,16 @@ at::Tensor gemm_awq_ut(at::Tensor I, at::Tensor W, at::Tensor W_zeros_scales,
 
     return O;
 }
+
+at::Tensor dequant(at::Tensor W, at::Tensor zeros_scales, const int N, const int K, const int group_size) {
+    at::Tensor W_load = torch::zeros({N, K}, at::device(W.device()).dtype(torch::kFloat16));
+
+    dequant_W_kernel<<<dim3(DIV_UP(N, 16)), dim3(256)>>>(
+        reinterpret_cast<uint32_t*>(W.data_ptr()), 
+        reinterpret_cast<half2*>(zeros_scales.data_ptr<at::Half>()), 
+        reinterpret_cast<half*>(W_load.data_ptr<at::Half>()), 
+        N, K, group_size
+    );
+
+    return W_load;
+}
