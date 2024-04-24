@@ -7,7 +7,7 @@ from quant import gemm_awq_ut
 
 class WALinear(nn.Module):
     def __init__(self, in_features, out_features, w_config = None, a_config = None,
-                 w_bit = 4, a_bit = 16, group_size = 128,
+                 w_bit = 4, a_bit = 16, group_size = 64,
                  bias=True, quantize_output=False, dev="cuda", dtype=torch.float16):
         super().__init__()
         self.in_features = in_features
@@ -17,6 +17,7 @@ class WALinear(nn.Module):
         self.w_bit = w_bit
         self.a_bit = a_bit
         self.group_size = group_size
+        self.quantize_output = quantize_output
 
         # print("origin weight shape: ", (self.out_features, self.in_features * w_bit // 8))
         # print("origin zero_scales shape: ", (self.out_features, self.in_features * 2 // group_size))
@@ -30,6 +31,8 @@ class WALinear(nn.Module):
             self.register_buffer("bias", torch.zeros((1, self.out_features), dtype=torch.float16, requires_grad=False, device=dev))
         else:
             self.register_buffer("bias", None)
+        
+        # self.register_buffer("org_weight", torch.zeros(self.out_features, self.in_features, dtype=torch.float16, requires_grad=False, device=dev))
 
         # self.act_quant = partial(pseudo_quantize_tensor, **self.a_config)
 
@@ -59,26 +62,15 @@ class WALinear(nn.Module):
             temp_weight = self.convert_2bit_to_4bit(self.weight)
         else:
             temp_weight = self.weight
-
-        if torch.any(torch.isnan(x)):
-            exit(0)
-        # print("========================================================")
-        # print("x: ", x, x.shape, x.dtype)
-        # print("temp_weight: ", temp_weight, temp_weight.shape, temp_weight.dtype)
-        # print("zeros_scales: ", self.zeros_scales, self.zeros_scales.shape, self.zeros_scales.dtype)
-
+        
+        # print(self.w_bit)
+        # y_ref = torch.matmul(x, self.org_weight.t()) + self.bias
         y = gemm_awq_ut(x,temp_weight,self.zeros_scales,x.shape[-2],
                         self.out_features, self.in_features, self.group_size) + self.bias
-        # print("y: ", y, y.shape, y.dtype)
-        # torch.save(x, '/home/huangshan/huangshan/project/sparse-quant/quantization/nvidia/script/x.pt')
-        # torch.save(temp_weight, '/home/huangshan/huangshan/project/sparse-quant/quantization/nvidia/script/weight.pt')
-        # torch.save(self.zeros_scales, '/home/huangshan/huangshan/project/sparse-quant/quantization/nvidia/script/zeros_scales.pt')
-        if torch.any(torch.isnan(y)):
-            # torch.save(x, '/home/huangshan/huangshan/project/sparse-quant/quantization/nvidia/script/x.pt')
-            # torch.save(temp_weight, '/home/huangshan/huangshan/project/sparse-quant/quantization/nvidia/script/weight.pt')
-            # torch.save(self.zeros_scales, '/home/huangshan/huangshan/project/sparse-quant/quantization/nvidia/script/zeros_scales.pt')
-            exit(0)
-        # print("========================================================")
+        # if self.w_bit == 2:
+        #     print("y_ref", y_ref)
+        #     print("y: ", y)
+        # assert torch.allclose(y_ref, y) == True
         return y
 
     @staticmethod
@@ -90,8 +82,8 @@ class WALinear(nn.Module):
         # new_module.weight, new_module.zeros_scales = pseudo_quantize_tensor(module.weight, inplace=True, **w_config)
         new_module.weight, new_module.zeros_scales = quant_muxi(module.weight, module.in_features, module.out_features,
                                                                 n_bit=w_config['n_bit'], group_size=w_config['group_size'])
-        print("quant weight shape: ", new_module.weight.shape)
-        print("quant zeros_scales shape: ", new_module.zeros_scales.shape)
+        # print("quant weight shape: ", new_module.weight.shape)
+        # print("quant zeros_scales shape: ", new_module.zeros_scales.shape)
 
         if module.bias is not None:
             new_module.bias = module.bias.unsqueeze(0)

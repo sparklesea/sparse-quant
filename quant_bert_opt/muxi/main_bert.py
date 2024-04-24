@@ -1,4 +1,4 @@
-from transformers import AutoTokenizer, BertForNextSentencePrediction
+from transformers import AutoTokenizer
 from datasets import Dataset
 import argparse
 from torch.utils.data import DataLoader
@@ -18,10 +18,12 @@ parser.add_argument("--kv_group_size", type=int, default=64)
 parser.add_argument("--kv_bit", type=int, default=16)
 parser.add_argument("--mask_path", type=str, default=None)  # /share/liutengxuan/NLP-playground/examples/sparse_attention/model/bert/bigbird_pattern_24_16_512_512.pt")
 parser.add_argument('--lut_path', type=str, default=None)
+parser.add_argument("--quantized", action="store_true")
+parser.add_argument("--eval", action="store_true")
+parser.add_argument('--output_path', type=str, default=None)
 args = parser.parse_args()
 
 enc = AutoTokenizer.from_pretrained("bert-large-cased")
-
 
 def tokenize_function(examples):
 
@@ -57,8 +59,14 @@ def collate_fn(data):
 
 eval_dataset = eval_dataset.map(tokenize_function, batched=True).shuffle(seed=42)
 eval_dataloader = DataLoader(eval_dataset, batch_size=1, collate_fn=collate_fn)
-model = BertForNextSentencePrediction.from_pretrained(args.model_path).half()
 
+if not args.quantized:
+    from transformers import BertForNextSentencePrediction
+else:
+    from module.bert.modeling_bert_ours import BertForNextSentencePrediction
+
+kwargs = {"torch_dtype": torch.float16}
+model = BertForNextSentencePrediction.from_pretrained(args.model_path, **kwargs)
 
 if args.mask_path is not None:
     from module.bert.modeling_bert import BertModel_use_static_attention
@@ -78,20 +86,26 @@ if args.lut_path is not None:
 # for i in range(24):
 #     model.bert.encoder.layer[i].intermediate.intermediate_act_fn = GeLUTable(lim=3, n_bit=8)
 # model.bert.pooler.activation = TanhTable(lim=3, n_bit=8)
-
 model = model.to("cuda")
-quantizer=BERTQuantizer(w_bit=args.w_bit,a_bit=args.a_bit,w_group_size=args.w_group_size)
-model = quantizer(model)
-print(model)
+if not args.quantized:
+    quantizer=BERTQuantizer(w_bit=args.w_bit,a_bit=args.a_bit,w_group_size=args.w_group_size)
+    model = quantizer(model)
+    print(model)
+    if args.output_path:
+        model.save_pretrained(args.output_path, safe_serialization=True)
+        # enc.torch_dtype="float16"
+        enc.save_pretrained(args.output_path, safe_serialization=True)
+
 model.eval()
-acc, cnt = 0, 0
-with torch.no_grad():
-    for batch in tqdm(eval_dataloader):
-        cnt += len(batch["labels"])
-        logits = model(**batch)[1]
-        pred = torch.argmax(logits, dim=-1)
-        # acc += torch.sum(pred == batch["labels"])
-        acc += torch.sum(pred == batch["labels"])
-print("Accurate:", acc)
-print("Sum:", cnt)
-print("Accuracy:", acc / cnt)
+if args.eval:
+    acc, cnt = 0, 0
+    with torch.no_grad():
+        for batch in tqdm(eval_dataloader):
+            cnt += len(batch["labels"])
+            logits = model(**batch)[1]
+            pred = torch.argmax(logits, dim=-1)
+            # acc += torch.sum(pred == batch["labels"])
+            acc += torch.sum(pred == batch["labels"])
+    print("Accurate:", acc)
+    print("Sum:", cnt)
+    print("Accuracy:", acc / cnt)

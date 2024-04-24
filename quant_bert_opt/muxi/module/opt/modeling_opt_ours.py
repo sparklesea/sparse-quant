@@ -161,6 +161,7 @@ class OPTAttention(nn.Module):
             self.q_proj = WALinear(embed_dim, embed_dim, bias=bias, dtype=torch.uint8)
         else:
             self.q_proj = WALinear(embed_dim, embed_dim, bias=bias, w_bit=2, dtype=torch.uint8)
+            # self.q_proj = WALinear(embed_dim, embed_dim, bias=bias, dtype=torch.uint8)
         self.out_proj = WALinear(embed_dim, embed_dim, bias=bias, dtype=torch.uint8)
         
         self._static_sparse_layout = None

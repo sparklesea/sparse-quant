@@ -131,10 +131,10 @@ def write_2bit_tensor_muxi(w_q):
     w_q = w_q.type(torch.uint8).reshape(-1, 4)
     w_int4 = torch.zeros(w_q.shape[0], 1, dtype=torch.uint8, device=w_q.device)
 
-    w_int4[:, 0] = w_q[:, 0] << 6
-    w_int4[:, 0] += (w_q[:, 1] << 4)
-    w_int4[:, 0] += (w_q[:, 2] << 2)
-    w_int4[:, 0] += w_q[:, 0]
+    w_int4[:, 0] = w_q[:, 0] << 4
+    w_int4[:, 0] += (w_q[:, 1] << 6)
+    w_int4[:, 0] += w_q[:, 2]
+    w_int4[:, 0] += (w_q[:, 3] << 2)
 
     new_shape = w_q_org_shape[:-1] + (w_q_org_shape[-1] * 2 // 8,)
     return w_int4.reshape(new_shape)
