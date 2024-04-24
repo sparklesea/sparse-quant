@@ -55,10 +55,10 @@ class WALinear(nn.Module):
 
     @torch.no_grad()
     def forward(self, x):
-        # if self.w_bit == 2:
-        #     temp_weight = self.convert_2bit_to_4bit(self.weight)
-        # else:
-        temp_weight = self.weight
+        if self.w_bit == 2:
+            temp_weight = self.convert_2bit_to_4bit(self.weight)
+        else:
+            temp_weight = self.weight
 
         W_load = dequant(temp_weight, self.zeros_scales, self.out_features, self.in_features, self.group_size)
         y = torch.matmul(x, W_load.t()) + self.bias
