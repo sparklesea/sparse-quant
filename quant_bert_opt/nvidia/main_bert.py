@@ -21,7 +21,6 @@ parser.add_argument('--lut_path', type=str, default=None)
 parser.add_argument("--output_path", type=str, help="path to save the quantized model")
 parser.add_argument("--quantized", action="store_true")
 parser.add_argument("--eval", action="store_true")
-parser.add_argument('--lut_path', type=str, default=None)
 args = parser.parse_args()
 
 enc = AutoTokenizer.from_pretrained("bert-large-cased")
@@ -84,19 +83,6 @@ if args.lut_path is not None:
     model.bert.use_static_attention()
     print("Using sparse lut {}".format(args.lut_path))
     set_static_attention_lut(args.lut_path, None, model.bert.encoder.layer, 64)
-# for i in range(24):
-#     model.bert.encoder.layer[i].intermediate.intermediate_act_fn = GeLUTable(lim=3, n_bit=8)
-# model.bert.pooler.activation = TanhTable(lim=3, n_bit=8)
-if args.lut_path is not None:
-    from module.bert.modeling_bert import BertModel_use_block_sparse_attention_lut
-    from module.mask.sparse_attention import set_static_attention_lut
-
-    model.bert.use_static_attention = BertModel_use_block_sparse_attention_lut.__get__(model.bert)
-    model.bert.use_static_attention()
-    print("Using sparse lut {}".format(args.lut_path))
-    set_static_attention_lut(args.lut_path, None, model.bert.encoder.layer, 64)
-
-# python main_bert.py --model_path bert_model/bert-large-cased-lambada --lut_path masks/bert_large_lut.pt
 
 model = model.to("cuda")
 if not args.quantized:
