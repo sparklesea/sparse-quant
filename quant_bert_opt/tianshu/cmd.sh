@@ -4,6 +4,9 @@ CUDA_VISIBLE_DEVICES=0 python main_bert.py --model_path bert_model/bert-large-ca
 # quant+sparse
 CUDA_VISIBLE_DEVICES=0 python main_bert.py --model_path bert_model/bert-large-cased-lambada --w_bit 4 --a_bit 8 --mask_path masks/bert.pt
 
+CUDA_VISIBLE_DEVICES=1 python main_bert.py --model_path bert_model/bert-large-cased-lambada --w_bit 4 --w_group_size 64 --lut_path masks/bert_large_lut.pt --output_path quantized_model/bert --w_group_size 64
+
+CUDA_VISIBLE_DEVICES=1 python main_bert.py --model_path quantized_model/bert --w_bit 4 --w_group_size 64 --lut_path masks/bert_large_lut.pt --quantized --eval
 # for opt
 #fp16
 CUDA_VISIBLE_DEVICES=0 python main_opt.py --model_path /share/huangshan/opt-6.7b --tasks lambada_standard
