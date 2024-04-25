@@ -3,7 +3,8 @@ from torch import nn
 from functools import partial
 from utils.quant_funcs import pseudo_quantize_tensor
 from utils.quant_dequant_nvidia import quant_lmdeploy, convert_2bit_to_4bit
-from inficom import gemm_awq_ut
+# from inficom import gemm_awq_ut
+from quant import gemm_awq_ut
 
 
 class WALinear(nn.Module):
