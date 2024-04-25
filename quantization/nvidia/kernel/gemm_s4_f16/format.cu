@@ -223,12 +223,7 @@ __global__ void transpose_merge_zeros_scales_kernel(half* zeros,
     }
 }
 
-void transpose_merge_zeros_scales(torch::Tensor zeros,
-                                  torch::Tensor scales,
-                                  torch::Tensor zeros_scales,
-                                  int in_features,
-                                  int out_features,
-                                  int group_size) {
+c {
     transpose_merge_zeros_scales_kernel<<<256, 256>>>(
         reinterpret_cast<half*>(zeros.data_ptr<at::Half>()),
         reinterpret_cast<half*>(scales.data_ptr<at::Half>()),

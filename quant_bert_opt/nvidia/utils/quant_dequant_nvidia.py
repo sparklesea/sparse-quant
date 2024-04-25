@@ -1,5 +1,5 @@
 import torch
-from inficom import transpose_merge_zeros_scales, convert_ours_to_awq, convert_awq_to_lmdeploy
+from quant import transpose_merge_zeros_scales, convert_ours_to_awq, convert_awq_to_lmdeploy
 
 # W4A16 reformat quant param
 def quant_lmdeploy(weight, input_features, output_features, group_size, n_bit):
