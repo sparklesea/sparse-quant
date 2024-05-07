@@ -143,3 +143,10 @@ with torch.no_grad():
         pred = torch.argmax(logits, dim=-1)
         print(pred)
 
+
+# first gen quanted model
+# CUDA_VISIBLE_DEVICES=6 python eval_compress_bert_support_3090.py --model_path bert_model/bert-large-cased-lambada --w_bit 4 --lut_path masks/bert_large_lut.pt --output_path quantized_model/bert
+
+# then run
+# CUDA_VISIBLE_DEVICES=6 python eval_compress_bert_support_3090.py --model_path quantized_model/bert --w_bit 4 --lut_path masks/bert_large_lut.pt --quantized
+

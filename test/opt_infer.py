@@ -85,7 +85,7 @@ def main():
             # model.save_pretrained(args.output_path, safe_serialization=True)
             enc.save_pretrained(args.output_path)
 
-    # CUDA_VISIBLE_DEVICES=6 python eval_origin_opt_support.py --model_path=/share/huangshan/opt-6.7b/
+    # CUDA_VISIBLE_DEVICES=6 python eval_compress_opt_support_3090.py --model_path=/share/huangshan/opt-6.7b/ --lut_path masks/opt_lut_density_26.pt
     print(args.sample)
     sample_prompts = [prompts[i] for i in args.sample]
     # print(sample_prompts)
@@ -98,4 +98,9 @@ def main():
 
 
 if __name__ == "__main__":
+    # first gen quanted model
+    # CUDA_VISIBLE_DEVICES=6 python eval_compress_opt_support_3090.py --model_path /share/huangshan/opt-6.7b --w_bit 4 --output_path quantized_model/opt
+
+    # then run
+    # CUDA_VISIBLE_DEVICES=6 python eval_compress_opt_support_3090.py --model_path quantized_model/opt --lut_path masks/opt_lut_density_26.pt --w_bit 4 --quantized
     main()
