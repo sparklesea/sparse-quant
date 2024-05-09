@@ -136,16 +136,16 @@ if not args.quantized:
         enc.save_pretrained(args.output_path, safe_serialization=True)
 model.eval()
 
-
-with torch.no_grad():
-    for batch in tqdm(eval_dataloader):
-        logits = model(**batch)[1]
-        pred = torch.argmax(logits, dim=-1)
-        print(pred)
-        if pred == batch["labels"]:
-            print("acc")
-        else:
-            print("error")
+if args.eval:
+    with torch.no_grad():
+        for batch in tqdm(eval_dataloader):
+            logits = model(**batch)[1]
+            pred = torch.argmax(logits, dim=-1)
+            print(pred)
+            if pred == batch["labels"]:
+                print("acc")
+            else:
+                print("error")
 
 
 # first gen quanted model

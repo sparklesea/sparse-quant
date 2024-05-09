@@ -89,3 +89,10 @@ class WALinear(nn.Module):
     def __repr__(self):
         return "W{}A{}Linear({}, {})".format(self.w_bit, self.a_bit, self.in_features, self.out_features)
     
+    # def get_info(self):
+    #     if self.w_bit == 4:
+    #         return {"weight_count": self.in_features * self.out_features, 
+    #                 "4bit_count": self.weight.numel() * 4}
+    #     elif self.w_bit == 2:
+    #         return {"weight_count": self.in_features * self.out_features, 
+    #                 "2bit_count": self.weight.numel() * 8}

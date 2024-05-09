@@ -1,0 +1,1 @@
+CUDA_VISIBLE_DEVICES=6 python nvidia/opt_info.py --model_path quantized_model/opt --w_bit 4

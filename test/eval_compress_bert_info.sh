@@ -1,0 +1,1 @@
+CUDA_VISIBLE_DEVICES=6 python nvidia/bert_info.py --model_path quantized_model/bert --w_bit 4
