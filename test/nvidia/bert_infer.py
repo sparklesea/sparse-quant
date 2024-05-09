@@ -33,48 +33,48 @@ def tokenize_function(examples):
 
 dataset = {
     "sentence1": [
-        "pre sentence 1", 
-        "pre sentence 2", 
-        "pre sentence 3", 
-        "pre sentence 4", 
-        "pre sentence 5", 
-        "pre sentence 6", 
-        "pre sentence 7", 
-        "pre sentence 8", 
-        "pre sentence 9", 
-        "pre sentence 10", 
-        "pre sentence 11", 
-        "pre sentence 12", 
-        "pre sentence 13", 
-        "pre sentence 14", 
-        "pre sentence 15", 
-        "pre sentence 16", 
-        "pre sentence 17", 
-        "pre sentence 18", 
-        "pre sentence 19", 
-        "pre sentence 20"
+        "in my palm is a clear stone , and inside it is a small ivory statuette . a guardian angel . `` figured if you 're going to be out at night getting hit by cars , you might as well have some backup . '' i look at him , feeling stunned . like this is some sort of sign ", 
+        "in my palm is a clear stone , and inside it is a small ivory statuette . a guardian angel . `` figured if you 're going to be out at night getting hit by cars , you might as well have some backup . '' i look at him , feeling stunned . like this is some sort of sign ", 
+        "give me a minute to change and i 'll meet you at the docks . '' she 'd forced those words through her teeth . `` no need to change . we wo n't be that long . '' shane gripped her arm and started leading her to the dock ", 
+        "give me a minute to change and i 'll meet you at the docks . '' she 'd forced those words through her teeth . `` no need to change . we wo n't be that long . '' shane gripped her arm and started leading her to the dock ", 
+        "`` only one source i know of that would be likely to cough up enough money to finance a phony sleep research facility and pay people big bucks to solve crimes in their dreams , '' farrell concluded dryly . `` what can i say ? '' ellis unfolded his arms and widened his hands . `` your tax dollars at work . '' before farrell could respond , leila 's voice rose from inside the house . `` no insurance ? '' she wailed ", 
+        "`` only one source i know of that would be likely to cough up enough money to finance a phony sleep research facility and pay people big bucks to solve crimes in their dreams , '' farrell concluded dryly . `` what can i say ? '' ellis unfolded his arms and widened his hands . `` your tax dollars at work . '' before farrell could respond , leila 's voice rose from inside the house . `` no insurance ? '' she wailed ", 
+        "helen 's heart broke a little in the face of miss mabel 's selfless courage . she thought that because she was old , her life was of less value than the others ' . for all helen knew , miss mabel had a lot more years to live than she did ", 
+        "helen 's heart broke a little in the face of miss mabel 's selfless courage . she thought that because she was old , her life was of less value than the others ' . for all helen knew , miss mabel had a lot more years to live than she did ", 
+        "preston had been the last person to wear those chains , and i knew what i 'd see and feel if they were slipped onto my skin-the reaper 's unending hatred of me . i 'd felt enough of that emotion already in the amphitheater . i did n't want to feel anymore . `` do n't put those on me , '' i whispered . `` please ", 
+        "preston had been the last person to wear those chains , and i knew what i 'd see and feel if they were slipped onto my skin-the reaper 's unending hatred of me . i 'd felt enough of that emotion already in the amphitheater . i did n't want to feel anymore . `` do n't put those on me , '' i whispered . `` please ", 
+        "she knew that basha was a decent young man , that he was pretty sweet and friendly with her . jawen knew they had a bit of a history , but she thought that this time she would get along better with him , that she could overlook those problems . they kissed , and she knew that she liked basha , but then hastin interfered ", 
+        "she knew that basha was a decent young man , that he was pretty sweet and friendly with her . jawen knew they had a bit of a history , but she thought that this time she would get along better with him , that she could overlook those problems . they kissed , and she knew that she liked basha , but then hastin interfered ", 
+        "he heard rhinna speak `` the queen wants you in her carriage . '' tom spoke `` no , i 'm not going in some asylum . '' ran was seen standing next to him spoke `` it 's just for a private talk with you that 's all ", 
+        "he heard rhinna speak `` the queen wants you in her carriage . '' tom spoke `` no , i 'm not going in some asylum . '' ran was seen standing next to him spoke `` it 's just for a private talk with you that 's all ", 
+        "there was no way he would come here on his own . he ordered a cup of coffee , and then we just sat in silence . `` so , '' aidan finally said , `` how 's it going ? '' i laughed . `` not much has changed since the last time i saw you ", 
+        "there was no way he would come here on his own . he ordered a cup of coffee , and then we just sat in silence . `` so , '' aidan finally said , `` how 's it going ? '' i laughed . `` not much has changed since the last time i saw you ", 
+        "`` why ? '' `` i would have thought you 'd find him rather dry , '' she said . `` i do n't know about that , '' said gabriel . `` he was a great craftsman , '' said heather . `` that he was , '' said flannery ", 
+        "`` why ? '' `` i would have thought you 'd find him rather dry , '' she said . `` i do n't know about that , '' said gabriel . `` he was a great craftsman , '' said heather . `` that he was , '' said flannery ", 
+        "escorting drunk humans out of the bar is different from going up against a tiger-wildcat who eats raw steak for breakfast and is dying for a fight . '' `` i bet he could win with just his breath , '' ronan said . sean chuckled . `` take it seriously , ronan . these guys are seasoned ", 
+        "both its sun-speckled shade and the cool grass beneath were a welcome respite after the stifling kitchen , and i was glad to relax against the tree 's rough , brittle bark and begin my breakfast of buttery , toasted bread and fresh fruit . even the water was tasty , it was so clean and cold "
     ], 
     "sentence2": [
-        "next sentence 1", 
-        "next sentence 2", 
-        "next sentence 3", 
-        "next sentence 4", 
-        "next sentence 5", 
-        "next sentence 6", 
-        "next sentence 7", 
-        "next sentence 8", 
-        "next sentence 9", 
-        "next sentence 10", 
-        "next sentence 11", 
-        "next sentence 12", 
-        "next sentence 13", 
-        "next sentence 14", 
-        "next sentence 15", 
-        "next sentence 16", 
-        "next sentence 17", 
-        "next sentence 18", 
-        "next sentence 19", 
-        "next sentence 20"
+        " but as i stare at harlin , his mouth curved in a confident grin , i do n't care about signs", 
+        " `` i can make it there on my own , shane", 
+        " `` i can make it there on my own , shane", 
+        " `` what do you mean you do n't have any insurance", 
+        " `` what do you mean you do n't have any insurance", 
+        " `` not going to happen , '' replied helen", 
+        " `` not going to happen , '' replied helen", 
+        " '' sergei looked at me , surprised by my low , raspy please , but he put down the chains", 
+        " '' sergei looked at me , surprised by my low , raspy please , but he put down the chains", 
+        " she was so angry that she immediately said , once they were out of earshot of basha , `` you do n't mean anything to me anymore , hastin", 
+        " she was so angry that she immediately said , once they were out of earshot of basha , `` you do n't mean anything to me anymore , hastin", 
+        " '' tom groaned and went inside the carriage to sit down next to the queen", 
+        " '' tom groaned and went inside the carriage to sit down next to the queen", 
+        " '' `` ya know , you eat here a lot , '' said aidan", 
+        " '' `` ya know , you eat here a lot , '' said aidan", 
+        " `` and polish , to boot , '' said gabriel", 
+        " `` and polish , to boot , '' said gabriel", 
+        " it almost made up for the lack of coffee", 
+        " if marquez has a champion , it means he 's won a good share of the fights", 
+        " if marquez has a champion , it means he 's won a good share of the fights"
     ],
     "labels": [0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1]
 }
@@ -99,7 +99,7 @@ def collate_fn(data):
     labels = torch.tensor(labels, dtype=int).cuda()
     return {"labels": labels, "input_ids": tensor_input_ids, "token_type_ids": tensor_token_type_ids, "attention_mask": tensor_attention_mask}
 
-eval_dataset = eval_dataset.map(tokenize_function, batched=True).shuffle(seed=42)
+eval_dataset = eval_dataset.map(tokenize_function, batched=True)
 eval_dataloader = DataLoader(eval_dataset, batch_size=1, collate_fn=collate_fn)
 
 if not args.quantized:
@@ -142,6 +142,10 @@ with torch.no_grad():
         logits = model(**batch)[1]
         pred = torch.argmax(logits, dim=-1)
         print(pred)
+        if pred == batch["labels"]:
+            print("acc")
+        else:
+            print("error")
 
 
 # first gen quanted model
