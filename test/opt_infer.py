@@ -99,8 +99,8 @@ def main():
 
 if __name__ == "__main__":
     # first gen quanted model
-    # CUDA_VISIBLE_DEVICES=6 python eval_compress_opt_support_3090.py --model_path /share/huangshan/opt-6.7b --w_bit 4 --output_path quantized_model/opt
+    # CUDA_VISIBLE_DEVICES=6 python opt_infer.py --model_path /share/huangshan/opt-6.7b --w_bit 4 --output_path quantized_model/opt
 
     # then run
-    # CUDA_VISIBLE_DEVICES=6 python eval_compress_opt_support_3090.py --model_path quantized_model/opt --lut_path masks/opt_lut_density_26.pt --w_bit 4 --quantized
+    # CUDA_VISIBLE_DEVICES=6 python opt_infer.py --model_path quantized_model/opt --lut_path masks/opt_lut_density_26.pt --w_bit 4 --quantized
     main()
