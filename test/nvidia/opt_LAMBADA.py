@@ -22,6 +22,7 @@ parser.add_argument("--rep_file", type=str, default=None)
 parser.add_argument("--mask_path", type=str, default=None)
 parser.add_argument("--quantized", action="store_true")
 parser.add_argument("--lut_path", type=str, default=None)
+parser.add_argument("--fake", action="store_true")
 args = parser.parse_args()
 
 
@@ -41,7 +42,7 @@ def main():
         model, _ = set_static_attention_rule(
             model, args.mask_path, model_layers=model.model.decoder.layers
         )
-    if args.lut_path is not None:
+    elif args.lut_path is not None:
         from playground.models.opt.modeling_opt import OPTModel_use_block_sparse_attention_lut
         from module.mask.sparse_attention import set_static_attention_lut
 
@@ -52,7 +53,7 @@ def main():
     model=model.cuda()
     if not args.quantized:
         if args.w_bit<16 or args.a_bit<16:
-            quantizer=OPTQuantizer(rep_file=args.rep_file,w_bit=args.w_bit,w_group_size=args.w_group_size,a_bit=args.a_bit,a_group_size=args.a_group_size,a_granularity="per_group")
+            quantizer=OPTQuantizer(rep_file=args.rep_file,w_bit=args.w_bit,w_group_size=args.w_group_size,a_bit=args.a_bit,a_group_size=args.a_group_size,a_granularity="per_group",fake_quant=args.fake)
             model = quantizer(model)
             # print(model)
         # # save the quantized model
@@ -76,7 +77,6 @@ def main():
         )
         print(results)
         print(evaluator.make_table(results))
-
 
 if __name__ == "__main__":
     main()

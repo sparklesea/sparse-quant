@@ -1,9 +1,10 @@
 import torch
 from quantizer.smooth_quantizer import SmoothQuantizer
 class OPTQuantizer(SmoothQuantizer):
-    def __init__(self,rep_file, w_bit=16, a_bit=16, w_group_size=128, a_group_size=128, w_granularity="per_group", a_granularity="per_token", w_zero_point=True, a_zero_point=False):
+    def __init__(self,rep_file, w_bit=16, a_bit=16, w_group_size=128, a_group_size=128, w_granularity="per_group", a_granularity="per_token", w_zero_point=True, a_zero_point=False, fake_quant=False):
         super().__init__(rep_file,w_bit, a_bit, w_group_size, a_group_size, w_granularity, a_granularity, w_zero_point, a_zero_point)
         self.quant_ignore=["lm_head"]
+        self.fake_quant = fake_quant
 
     def wa_quantize_model(self, model):
         from module.qlinear.qlinear import WALinear
@@ -25,7 +26,10 @@ class OPTQuantizer(SmoothQuantizer):
         return model
     
     def w_quantize_model(self, model):
-        from module.qlinear.qlinear import WALinear
+        if self.fake_quant:
+            from module.qlinear.qlinear_fake import WALinear
+        else:
+            from module.qlinear.qlinear import WALinear
         from utils.utils import get_module_by_name_suffix
 
         for name, module in model.named_modules():
@@ -45,6 +49,6 @@ class OPTQuantizer(SmoothQuantizer):
                 father_module = get_module_by_name_suffix(model, ".".join(name.split(".")[:-1]))
                 setattr(father_module, name.split(".")[-1], new_linear)
                 del new_linear, module
-                print("after: ", getattr(father_module, name.split(".")[-1]))
+                # print("after: ", getattr(father_module, name.split(".")[-1]))
                 torch.cuda.empty_cache()
         return model

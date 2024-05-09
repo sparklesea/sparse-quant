@@ -21,6 +21,7 @@ parser.add_argument('--lut_path', type=str, default=None)
 parser.add_argument("--output_path", type=str, help="path to save the quantized model")
 parser.add_argument("--quantized", action="store_true")
 parser.add_argument("--eval", action="store_true")
+parser.add_argument("--fake", action="store_true")
 args = parser.parse_args()
 
 enc = AutoTokenizer.from_pretrained("bert-large-cased")
@@ -86,7 +87,7 @@ if args.lut_path is not None:
 
 model = model.to("cuda")
 if not args.quantized:
-    quantizer=BERTQuantizer(w_bit=args.w_bit,a_bit=args.a_bit,w_group_size=args.w_group_size)
+    quantizer=BERTQuantizer(w_bit=args.w_bit,a_bit=args.a_bit,w_group_size=args.w_group_size,fake_quant=args.fake)
     model = quantizer(model)
     print(model)
     if args.output_path:
