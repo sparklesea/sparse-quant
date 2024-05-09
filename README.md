@@ -3,6 +3,13 @@
 
 ## sparse-attention
 triton >= 2.1.0
+### pre-installation
+1. lm_eval
+    ```
+    git clone -b v0.3.0 git@github.com:EleutherAI/lm-evaluation-harness.git
+    cd lm-evaluation-harness/
+    pip install -e .
+    ```
 ### Installation
 1.  cd your GPU environment
     ```

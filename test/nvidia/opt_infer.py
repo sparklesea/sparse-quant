@@ -23,6 +23,7 @@ parser.add_argument("--mask_path", type=str, default=None)
 parser.add_argument("--quantized", action="store_true")
 parser.add_argument("--lut_path", type=str, default=None)
 parser.add_argument("--sample", nargs="+", type=int, default=[0, 1, 2, 3, 4])
+parser.add_argument("--eval", action="store_true")
 args = parser.parse_args()
 
 prompts = [
@@ -86,15 +87,17 @@ def main():
             enc.save_pretrained(args.output_path)
 
     # CUDA_VISIBLE_DEVICES=6 python eval_compress_opt_support_3090.py --model_path=/share/huangshan/opt-6.7b/ --lut_path masks/opt_lut_density_26.pt
-    print(args.sample)
-    sample_prompts = [prompts[i] for i in args.sample]
-    # print(sample_prompts)
-    for prompt in sample_prompts:
-        input_ids = enc(prompt, return_tensors="pt").input_ids.cuda()
-        generated_ids = model.generate(input_ids, max_length=512)
-        out = enc.batch_decode(generated_ids, skip_special_tokens=True)
+    
+    if args.eval:
+        print(args.sample)
+        sample_prompts = [prompts[i] for i in args.sample]
+        # print(sample_prompts)
+        for prompt in sample_prompts:
+            input_ids = enc(prompt, return_tensors="pt").input_ids.cuda()
+            generated_ids = model.generate(input_ids, max_length=512)
+            out = enc.batch_decode(generated_ids, skip_special_tokens=True)
 
-        print(out)
+            print(out)
 
 
 if __name__ == "__main__":
