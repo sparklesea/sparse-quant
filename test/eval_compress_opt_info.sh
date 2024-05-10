@@ -1,1 +1,1 @@
-CUDA_VISIBLE_DEVICES=6 python nvidia/opt_info.py --model_path quantized_model/opt --w_bit 4
+CUDA_VISIBLE_DEVICES=6 python nvidia/opt_info.py --model_path quantized_model/opt --lut_path masks/opt_lut_density_26.pt --w_bit 4

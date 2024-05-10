@@ -6,3 +6,4 @@ dist
 quantized_model/
 *.pt
 *.safetensors
+*.log

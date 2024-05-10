@@ -26,17 +26,21 @@ def main():
 
     kwargs = {"torch_dtype": torch.float16}
     model = BertForNextSentencePrediction.from_pretrained(args.model_path, **kwargs)
+
     if args.lut_path is not None:
-        from playground.models.opt.modeling_opt import OPTModel_use_block_sparse_attention_lut
+        from module.bert.modeling_bert import BertModel_use_block_sparse_attention_lut
         from module.mask.sparse_attention import set_static_attention_lut
 
-        print("use lut")
-        model.model.decoder.use_block_sparse_attention_lut = OPTModel_use_block_sparse_attention_lut.__get__(model.model.decoder)
-        model.model.decoder.use_block_sparse_attention_lut()
-        set_static_attention_lut(args.lut_path, None, model.model.decoder.layers, 64)
+        model.bert.use_static_attention = BertModel_use_block_sparse_attention_lut.__get__(model.bert)
+        model.bert.use_static_attention()
+        print("Using sparse lut {}".format(args.lut_path))
+        set_static_attention_lut(args.lut_path, None, model.bert.encoder.layer, 64)
+
     model.eval()
 
-    model_info_list=[{"total_weight_count":0,"4bit_count":0,"2bit_count":0,"avg_bit_width":0} for _ in range(25)]
+    sparsity = count_sparsity(args.lut_path)
+    model_info_list=[{"total_weight_count":0,"4bit_count":0,"2bit_count":0,"avg_bit_width":0, "sparsity":(sparsity[i].sum()/sparsity.shape[1]).item()} for i in range(24)]
+    model_info_list.append({"total_weight_count":0,"4bit_count":0,"2bit_count":0,"avg_bit_width":0})
     # print(model_info_list)
     for name, module in model.named_modules():
         if isinstance(module, WALinear):
@@ -64,6 +68,31 @@ def main():
             print(f"pooler: {model_info_list[i]}")
     print("total_avg_bit_width: ", total_avg_bit/25)
 
+    spar = torch.sum(sparsity) / (sparsity.shape[0] * sparsity.shape[1])
+    print("total sparsity: ", spar)
+
+def count_mask_sparsity(mask):
+    x = mask.shape[0]
+    block = 0
+    for i in range(x):
+        block += torch.unique(mask[i]).shape[0]
+    
+    return 1 - block / (x * x)
+
+def count_sparsity(lut_path):
+    lut = torch.load(lut_path)
+
+    layer_num = len(lut)
+    head_num = lut[0].shape[0]
+
+    sparsity = torch.zeros((layer_num, head_num))
+
+    for layer in range(layer_num):
+        for head in range(head_num):
+            mask = lut[layer][head]
+            sparsity[layer][head] = count_mask_sparsity(mask)
+
+    return sparsity
 
 if __name__ == "__main__":
     main()
