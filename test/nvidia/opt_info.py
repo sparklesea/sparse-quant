@@ -35,7 +35,7 @@ def main():
         set_static_attention_lut(args.lut_path, None, model.model.decoder.layers, 64)
 
     sparsity = count_sparsity(args.lut_path)
-    model_info_list=[{"total_weight_count":0,"4bit_count":0,"2bit_count":0,"avg_bit_width":0, "sparsity":(sparsity[i].sum()/sparsity.shape[1]).item()} for i in range(32)]
+    model_info_list=[{"total_weight_count":0,"4bit_count":0,"2bit_count":0,"avg_bit_width":0, "sparsity":(sparsity[i].mean()).item()} for i in range(32)]
     # print(model_info_list)
     for name, module in model.named_modules():
         if isinstance(module, WALinear):

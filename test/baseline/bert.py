@@ -1,63 +1,37 @@
-from transformers import pipeline, BertTokenizer
 import torch
+import time
 
-unmasker = pipeline('fill-mask', model='bert-large-uncased')
-tokenizer = BertTokenizer.from_pretrained('bert-large-uncased')
+from transformers import BertTokenizer, BertModel, AutoTokenizer, BertForNextSentencePrediction
 
-for seq_len in [8, 128]:
-    input_ids = torch.randint(1, 10000, (1, seq_len), dtype=torch.long, device="cuda")
-    input_ctx_list = tokenizer.batch_decode(input_ids)
-    input_ctx=''
-    for i in range(len(input_ctx_list)):
-        input_ctx += input_ctx_list[i]
-        input_ctx += ' '
-    input_ctx += '[MASK]'
+tokenizer = AutoTokenizer.from_pretrained("bert-large-cased")
+model = BertForNextSentencePrediction.from_pretrained('/home/huangshan/huangshan/project/sparse-quant/test/bert_model/bert-large-cased-lambada', torch_dtype=torch.float32).to("cuda")
+
+# tokenizer = BertTokenizer.from_pretrained('bert-large-uncased')
+# model = BertModel.from_pretrained("bert-large-uncased").to("cuda")
+
+for prefill_size in [8, 16, 32, 64, 128]:
+    words = ["life" for _ in range(prefill_size)]
+    
+    text = " ".join(words)
+    encoded_input = tokenizer(text, return_tensors='pt').to("cuda")
+    # print(encoded_input.input_ids.shape)
+    output = model(**encoded_input)
 
     warmup = 50
-    for i in range(warmup):
-        result = unmasker(input_ctx)
+    freq = 1000
 
-    repeat = 1000
-    time = 0
-    for i in range(repeat):
-        start = torch.cuda.Event(enable_timing=True)
-        end = torch.cuda.Event(enable_timing=True)
+    for _ in range(warmup):
+        output = model(**encoded_input)
+    torch.cuda.synchronize()
 
-        start.record()
-        result = unmasker(input_ctx)
-        torch.cuda.synchronize()
-        end.record()
-        time += start.elapsed_time(end)
+    start = time.time()
+    for _ in range(freq):
+        output = model(**encoded_input)
+    torch.cuda.synchronize()
+    end = time.time()
 
-    time /= repeat
-    print(f"{seq_len} prefill time:", time)
+    query_latency = end - start
+    query_latency /= freq
+    query_latency *= 1000
 
-
-# from transformers import AutoTokenizer, BertGenerationDecoder, BertGenerationConfig
-# import torch
-
-# tokenizer = AutoTokenizer.from_pretrained("google/bert_for_seq_generation_L-24_bbc_encoder")
-# config = BertGenerationConfig.from_pretrained("google/bert_for_seq_generation_L-24_bbc_encoder")
-# config.is_decoder = True
-# model = BertGenerationDecoder.from_pretrained(
-#     "google/bert_for_seq_generation_L-24_bbc_encoder", config=config
-# )
-
-# inputs = tokenizer("Hello, my dog is cute", return_token_type_ids=False, return_tensors="pt")
-
-# print(inputs)
-
-# outputs = model(**inputs)
-
-# prediction_logits = outputs.logits
-
-# print(prediction_logits.size())
-
-# outputs = torch.argmax(prediction_logits,-1)
-
-# print(outputs)
-# # outputs = tokenizer.convert_ids_to_tokens(outputs[0])
-
-# outputs = tokenizer.decode(outputs[0])
-
-# print(outputs)
+    print("prefill_size: ", prefill_size, "latency: ", query_latency)
