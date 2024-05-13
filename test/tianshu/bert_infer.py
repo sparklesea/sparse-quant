@@ -80,7 +80,11 @@ dataset = {
 }
 
 eval_dataset = Dataset.from_dict(dataset)
-eval_dataset = eval_dataset[args.sample]
+if args.sample is not None:
+    eval_dataset = eval_dataset[args.sample]
+else:
+    sample_id = torch.randperm(20).tolist()[:5]
+    eval_dataset = eval_dataset[sample_id]
 eval_dataset = Dataset.from_dict(eval_dataset)
 print(eval_dataset)
 
@@ -126,7 +130,7 @@ if args.lut_path is not None:
     set_static_attention_lut(args.lut_path, None, model.bert.encoder.layer, 64)
 
 model = model.to("cuda")
-if not args.quantized:
+if not args.quantized and args.w_bit is not None:
     quantizer=BERTQuantizer(w_bit=args.w_bit,a_bit=args.a_bit,w_group_size=args.w_group_size)
     model = quantizer(model)
     print(model)
@@ -136,16 +140,17 @@ if not args.quantized:
         enc.save_pretrained(args.output_path, safe_serialization=True)
 model.eval()
 
-
-with torch.no_grad():
-    for batch in tqdm(eval_dataloader):
-        logits = model(**batch)[1]
-        pred = torch.argmax(logits, dim=-1)
-        print(pred)
-        if pred == batch["labels"]:
-            print("acc")
-        else:
-            print("error")
+if args.eval:
+    with torch.no_grad():
+        print("randomly selected ids: ", sample_id)
+        for batch in tqdm(eval_dataloader):
+            logits = model(**batch)[1]
+            pred = torch.argmax(logits, dim=-1)
+            print(pred)
+            if pred == batch["labels"]:
+                print("predicted: ", "no" if pred.item() else "yes", ", groudtruth: ", "no" if batch["labels"].item() else "yes", ", correct")
+            else:
+                print("predicted: ", "no" if pred.item() else "yes", ", groudtruth: ", "no" if batch["labels"].item() else "yes", ", wrong")
 
 
 # first gen quanted model

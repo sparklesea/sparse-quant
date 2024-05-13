@@ -17,8 +17,8 @@ for prefill_size in [8, 16, 32, 64, 128]:
     # print(encoded_input.input_ids.shape)
     output = model(**encoded_input)
 
-    warmup = 50
-    freq = 1000
+    warmup = 10
+    freq = 200
 
     for _ in range(warmup):
         output = model(**encoded_input)

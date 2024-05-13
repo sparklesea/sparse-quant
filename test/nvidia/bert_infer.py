@@ -21,7 +21,7 @@ parser.add_argument('--lut_path', type=str, default=None)
 parser.add_argument("--output_path", type=str, help="path to save the quantized model")
 parser.add_argument("--quantized", action="store_true")
 parser.add_argument("--eval", action="store_true")
-parser.add_argument("--sample", nargs="+", type=int, default=[0, 5, 8, 15, 18])
+parser.add_argument("--sample", nargs="+", type=int)
 args = parser.parse_args()
 
 enc = AutoTokenizer.from_pretrained("bert-large-cased")
@@ -80,9 +80,12 @@ dataset = {
 }
 
 eval_dataset = Dataset.from_dict(dataset)
-eval_dataset = eval_dataset[args.sample]
+if args.sample is not None:
+    eval_dataset = eval_dataset[args.sample]
+else:
+    sample_id = torch.randperm(20).tolist()[:5]
+    eval_dataset = eval_dataset[sample_id]
 eval_dataset = Dataset.from_dict(eval_dataset)
-print(eval_dataset)
 
 def collate_fn(data):
     tensor_input_ids, tensor_token_type_ids, tensor_attention_mask, idx, labels = [], [], [], [], []
@@ -126,7 +129,7 @@ if args.lut_path is not None:
     set_static_attention_lut(args.lut_path, None, model.bert.encoder.layer, 64)
 
 model = model.to("cuda")
-if not args.quantized:
+if not args.quantized and args.w_bit is not None:
     quantizer=BERTQuantizer(w_bit=args.w_bit,a_bit=args.a_bit,w_group_size=args.w_group_size)
     model = quantizer(model)
     print(model)
@@ -138,15 +141,17 @@ model.eval()
 
 if args.eval:
     with torch.no_grad():
+        print("randomly selected ids: ", sample_id)
         # for batch in tqdm(eval_dataloader):
         for batch in eval_dataloader:
             logits = model(**batch)[1]
             pred = torch.argmax(logits, dim=-1)
             # print(pred.item())
+            print(enc.batch_decode(batch["input_ids"]))
             if pred == batch["labels"]:
-                print("predicted: ", pred.item(), ", groudtruth: ", batch["labels"].item(), ", correct")
+                print("predicted: ", "no" if pred.item() else "yes", ", groudtruth: ", "no" if batch["labels"].item() else "yes", ", correct")
             else:
-                print("predicted: ", pred.item(), ", groudtruth: ", batch["labels"].item(), ", error")
+                print("predicted: ", "no" if pred.item() else "yes", ", groudtruth: ", "no" if batch["labels"].item() else "yes", ", wrong")
 
 
 # first gen quanted model

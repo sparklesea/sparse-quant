@@ -98,7 +98,7 @@ def main():
         else:
             sample_id = torch.randperm(20).tolist()[:5]
             sample_prompts = [prompts[i] for i in sample_id]
-            print(sample_id)
+            print("randomly selected ids: ", sample_id)
         for prompt in sample_prompts:
             input_ids = enc(prompt, return_tensors="pt").input_ids.cuda()
             generated_ids = model.generate(input_ids, max_length=64)
