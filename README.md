@@ -2,6 +2,8 @@
 
 
 ## sparse-attention
+torch == 2.2.1
+transformers == 4.36.2
 triton >= 2.1.0
 ### pre-installation
 1. lm_eval
@@ -40,3 +42,37 @@ CUDA_VISIBLE_DEVICES=0 python main_opt.py --model_path {your opt-6.7b model path
 # for bert
 CUDA_VISIBLE_DEVICES=0 python main_bert.py --model_path bert_model/bert-large-cased-lambada --lut_path masks/bert_large_lut.pt
 ```
+
+## test
+first check `test` folder has 
+
+bert model: `bert_model/bert-large-cased-lambada`
+
+lut mask: `masks/`
+
+### model quantization
+
+```
+# for opt
+## nvidia
+CUDA_VISIBLE_DEVICES=0 python nvidia/opt_infer.py --model_path {your opt-6.7b model path} --w_bit 4 --output_path quantized_model/opt
+
+## muxi
+CUDA_VISIBLE_DEVICES=0 python muxi/opt_infer.py --model_path {your opt-6.7b model path} --w_bit 4 --w_group_size 64 --output_path quantized_model/opt
+
+## tianshu
+CUDA_VISIBLE_DEVICES=0 python tianshu/opt_infer.py --model_path {your opt-6.7b model path} --w_bit 4 --w_group_size 64 --output_path quantized_model/opt
+```
+
+```
+# for bert
+## nvidia
+CUDA_VISIBLE_DEVICES=0 python nvidia/bert_infer.py --model_path bert_model/bert-large-cased-lambada --w_bit 4 --output_path quantized_model/bert
+
+## muxi
+CUDA_VISIBLE_DEVICES=0 python muxi/bert_infer.py --model_path bert_model/bert-large-cased-lambada --w_bit 4 --w_group_size 64 --output_path quantized_model/bert
+
+## tianshu
+CUDA_VISIBLE_DEVICES=0 python tianshu/bert_infer.py --model_path bert_model/bert-large-cased-lambada --w_bit 4 --w_group_size 64 --output_path quantized_model/bert
+```
+
