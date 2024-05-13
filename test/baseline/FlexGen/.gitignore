@@ -1,0 +1,35 @@
+# Mac system files
+.DS_store
+
+# built binaries
+benchmark/third_party/pagecache-mangagement/trunk/fadv
+benchmark/third_party/pagecache-mangagement/trunk/*.so
+benchmark/third_party/pagecache-mangagement/trunk/sfr
+benchmark/third_party/pagecache-mangagement/trunk/Makefile
+dist
+
+# vscode & VIM & JetBrain
+.vscode/
+.idea
+*.swp
+
+# cache
+*__pycache__
+*.egg-info
+flexgen/apps/data
+flexgen/apps/runs
+flexgen/apps/benchmark_output
+flexgen/apps/data_wrangle/data
+flexgen/apps/data_wrangle/outputs
+flexgen/apps/data_wrangle/core
+
+# pickle
+*.pkl
+
+# log files
+*.tsv
+*.log
+*.raw
+
+# tmp scripts
+today_job.sh
