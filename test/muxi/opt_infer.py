@@ -30,26 +30,26 @@ args = parser.parse_args()
 
 
 prompts = [
-    "In the vast universe, there exists an unknown planet where", 
-    "In that tumultuous era, heroes emerged, and none was more legendary than", 
     "In the future city, between skyscrapers towering into the clouds, people travel through", 
-    "Once upon a time, in a faraway forest, there lived a", 
     "In the morning, the first ray of sunlight filtered through the curtains, spilling onto the bed. I slowly opened my eyes and found", 
-    "In the ancient east, there is a mysterious mountain range shrouded in clouds and fog. It is said that", 
     "Imagine you are an explorer searching for a lost ancient city in an unknown jungle", 
     "In the future underwater city, humans coexist harmoniously with marine life, creating a", 
     "On a distant planet, the passage of time differs from that on Earth, and a day might be equivalent to", 
     "Amidst the entanglement of war and peace, a little girl changed the fate of an entire country with her innocence and courage", 
     "Deep in the distant space, a spaceship encountered an unknown crisis, and the crew had to", 
-    "As night fell, a lonely traveler entered a mysterious tavern and encountered", 
-    "In ancient legends, there is a key that can open the door to time, hidden in", 
     "In the world of the future, virtual reality technology has reached its peak, allowing people to", 
-    "In a kingdom filled with magic and miracles, a young mage decided to save his country by becoming", 
-    "When robots acquire emotions and consciousness, how will their relationship with humans change", 
     "In the endless universe, there is a creature that possesses the ability to control time, known as", 
-    "In a parallel world where technology and magic coexist, humans and elves create a", 
-    "When artificial intelligence surpasses human intelligence, how will they treat us, and how should we respond", 
     "On a journey filled with fantasy and adventure, a young warrior and his companions encountered", 
+    "Describe the adventure of a lifetime for a group of friends who found a map leading to a parallel universe.", 
+    "What were the major contributing factors to the fall of the Roman Empire?", 
+    "How did the invention of the printing press revolutionize European society?", 
+    "What are the effects of quantitative easing?", 
+    "What were the economic and philosophical factors that led to the fall of the Soviet Union?", 
+    "What was the influence of the Khmer Empire on Southeast Asia's history and culture?", 
+    "What is the Voynich manuscript, and why has it perplexed scholars for centuries?", 
+    "What is the 'Dyatlov Pass incident' and why does it remain a mystery?", 
+    "What is the 'Phantom Time Hypothesis' proposed by Heribert Illig?", 
+    "Who were the 'Dog-Headed Saint' and the 'Lion-Faced Saint' in medieval Christian traditions?", 
 ]
 
 
