@@ -16,7 +16,7 @@ parser.add_argument("--a_group_size", type=int, default=128)
 parser.add_argument("--a_bit", type=int, default=16)
 parser.add_argument("--kv_group_size", type=int, default=64)
 parser.add_argument("--kv_bit", type=int, default=16)
-parser.add_argument("--mask_path", type=str, default=None)  # /share/liutengxuan/NLP-playground/examples/sparse_attention/model/bert/bigbird_pattern_24_16_512_512.pt")
+parser.add_argument("--mask_path", type=str, default=None) 
 parser.add_argument('--lut_path', type=str, default=None)
 parser.add_argument("--output_path", type=str, help="path to save the quantized model")
 parser.add_argument("--quantized", action="store_true")
@@ -138,14 +138,15 @@ model.eval()
 
 if args.eval:
     with torch.no_grad():
-        for batch in tqdm(eval_dataloader):
+        # for batch in tqdm(eval_dataloader):
+        for batch in eval_dataloader:
             logits = model(**batch)[1]
             pred = torch.argmax(logits, dim=-1)
-            print(pred)
+            # print(pred.item())
             if pred == batch["labels"]:
-                print("acc")
+                print("predicted: ", pred.item(), ", groudtruth: ", batch["labels"].item(), ", correct")
             else:
-                print("error")
+                print("predicted: ", pred.item(), ", groudtruth: ", batch["labels"].item(), ", error")
 
 
 # first gen quanted model
