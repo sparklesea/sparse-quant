@@ -46,10 +46,16 @@ triton >= 2.1.0
 ### 1. Set the env variables
 ```
 # if in the test machine
+
+#nvidia or tianshu
 export MODEL_OPT_PATH=/share/huangshan/opt-6.7b
 export MODEL_BERT_PATH=/share/huangshan/bert-large-cased-lambada
 
-# else
+#muxi
+export MODEL_OPT_PATH=/home/public/models/opt-6.7b
+export MODEL_BERT_PATH=/home/public/models/bert-large-cased-lambada
+
+#else
 export MODEL_OPT_PATH={opt model path}
 export MODEL_BERT_PATH={bert model path}
 ```
