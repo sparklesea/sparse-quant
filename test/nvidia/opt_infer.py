@@ -101,8 +101,8 @@ def main():
             input_ids = enc(prompt, return_tensors="pt").input_ids.cuda()
             generated_ids = model.generate(input_ids, max_length=64)
             out = enc.batch_decode(generated_ids, skip_special_tokens=True)
-
-            print(out)
+            print("prompt: ", prompt)
+            print("output: ", repr(out[0])[1:-1], "\n")
 
 
 if __name__ == "__main__":

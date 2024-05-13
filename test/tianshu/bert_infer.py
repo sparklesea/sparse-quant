@@ -146,11 +146,11 @@ if args.eval:
         for batch in tqdm(eval_dataloader):
             logits = model(**batch)[1]
             pred = torch.argmax(logits, dim=-1)
-            print(pred)
+            print("input: ", repr(enc.batch_decode(batch["input_ids"])[0]))
             if pred == batch["labels"]:
-                print("predicted: ", "no" if pred.item() else "yes", ", groudtruth: ", "no" if batch["labels"].item() else "yes", ", correct")
+                print("predicted: ", "no" if pred.item() else "yes", ", groudtruth: ", "no" if batch["labels"].item() else "yes", ", correct\n")
             else:
-                print("predicted: ", "no" if pred.item() else "yes", ", groudtruth: ", "no" if batch["labels"].item() else "yes", ", wrong")
+                print("predicted: ", "no" if pred.item() else "yes", ", groudtruth: ", "no" if batch["labels"].item() else "yes", ", wrong\n")
 
 
 # first gen quanted model

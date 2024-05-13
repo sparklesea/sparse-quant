@@ -82,6 +82,7 @@ dataset = {
 eval_dataset = Dataset.from_dict(dataset)
 if args.sample is not None:
     eval_dataset = eval_dataset[args.sample]
+    sample_id = args.sample
 else:
     sample_id = torch.randperm(20).tolist()[:5]
     eval_dataset = eval_dataset[sample_id]
@@ -147,11 +148,11 @@ if args.eval:
             logits = model(**batch)[1]
             pred = torch.argmax(logits, dim=-1)
             # print(pred.item())
-            print(enc.batch_decode(batch["input_ids"]))
+            print("input: ", repr(enc.batch_decode(batch["input_ids"])[0]))
             if pred == batch["labels"]:
-                print("predicted: ", "no" if pred.item() else "yes", ", groudtruth: ", "no" if batch["labels"].item() else "yes", ", correct")
+                print("predicted: ", "no" if pred.item() else "yes", ", groudtruth: ", "no" if batch["labels"].item() else "yes", ", correct\n")
             else:
-                print("predicted: ", "no" if pred.item() else "yes", ", groudtruth: ", "no" if batch["labels"].item() else "yes", ", wrong")
+                print("predicted: ", "no" if pred.item() else "yes", ", groudtruth: ", "no" if batch["labels"].item() else "yes", ", wrong\n")
 
 
 # first gen quanted model
