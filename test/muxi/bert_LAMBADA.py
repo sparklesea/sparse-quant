@@ -9,15 +9,14 @@ from quantizer.bert_quantizer import BERTQuantizer
 
 
 parser = argparse.ArgumentParser()
-parser.add_argument("--model_path", type=str, default="bert_model/bert-large-cased-lambada")
+parser.add_argument("--model_path", type=str, default="$MODEL_BERT_PATH")
 parser.add_argument("--w_group_size", type=int, default=128)
 parser.add_argument("--w_bit", type=int, default=16)
 parser.add_argument("--a_group_size", type=int, default=128)
 parser.add_argument("--a_bit", type=int, default=16)
 parser.add_argument("--kv_group_size", type=int, default=64)
 parser.add_argument("--kv_bit", type=int, default=16)
-parser.add_argument("--mask_path", type=str, default=None)  # /share/liutengxuan/NLP-playground/examples/sparse_attention/model/bert/bigbird_pattern_24_16_512_512.pt")
-parser.add_argument('--lut_path', type=str, default=None)
+parser.add_argument("--mask_path", type=str, default=None) 
 parser.add_argument("--output_path", type=str, help="path to save the quantized model")
 parser.add_argument("--quantized", action="store_true")
 parser.add_argument("--eval", action="store_true")

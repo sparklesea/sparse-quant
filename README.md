@@ -37,35 +37,48 @@ triton >= 2.1.0
     ```
 
 ## test
-### 1. First check `test` folder has 
+<!-- ### 1. First check `test` folder has 
 
     bert model: `bert_model/bert-large-cased-lambada`
 
-    lut mask: `masks/`
+    lut mask: `masks/` -->
 
+### 1. Set the env variables
+```
+# if in the test machine
+export MODEL_OPT_PATH=/share/huangshan/opt-6.7b
+export MODEL_BERT_PATH=/share/huangshan/bert-large-cased-lambada
+
+# else
+export MODEL_OPT_PATH={opt model path}
+export MODEL_BERT_PATH={bert model path}
+```
 ### 2. Generate quantized models
 
 ```
 # for opt
 ## nvidia
-CUDA_VISIBLE_DEVICES=0 python nvidia/opt_infer.py --model_path {your opt-6.7b model path} --w_bit 4 --output_path quantized_model/opt
+CUDA_VISIBLE_DEVICES=0 python nvidia/opt_infer.py --model_path $MODEL_OPT_PATH --w_bit 4 --output_path quantized_model/opt
 
 ## muxi
-CUDA_VISIBLE_DEVICES=0 python muxi/opt_infer.py --model_path {your opt-6.7b model path} --w_bit 4 --w_group_size 64 --output_path quantized_model/opt
+CUDA_VISIBLE_DEVICES=0 python muxi/opt_infer.py --model_path $MODEL_OPT_PATH --w_bit 4 --w_group_size 64 --output_path quantized_model/opt
 
 ## tianshu
-CUDA_VISIBLE_DEVICES=0 python tianshu/opt_infer.py --model_path {your opt-6.7b model path} --w_bit 4 --w_group_size 64 --output_path quantized_model/opt
+CUDA_VISIBLE_DEVICES=0 python tianshu/opt_infer.py --model_path $MODEL_OPT_PATH --w_bit 4 --w_group_size 64 --output_path quantized_model/opt
 ```
 
 ```
 # for bert
 ## nvidia
-CUDA_VISIBLE_DEVICES=0 python nvidia/bert_infer.py --model_path bert_model/bert-large-cased-lambada --w_bit 4 --output_path quantized_model/bert
+CUDA_VISIBLE_DEVICES=0 python nvidia/bert_infer.py --model_path $MODEL_BERT_PATH --w_bit 4 --output_path quantized_model/bert
 
 ## muxi
-CUDA_VISIBLE_DEVICES=0 python muxi/bert_infer.py --model_path bert_model/bert-large-cased-lambada --w_bit 4 --w_group_size 64 --output_path quantized_model/bert
+CUDA_VISIBLE_DEVICES=0 python muxi/bert_infer.py --model_path $MODEL_BERT_PATH --w_bit 4 --w_group_size 64 --output_path quantized_model/bert
 
 ## tianshu
-CUDA_VISIBLE_DEVICES=0 python tianshu/bert_infer.py --model_path bert_model/bert-large-cased-lambada --w_bit 4 --w_group_size 64 --output_path quantized_model/bert
+CUDA_VISIBLE_DEVICES=0 python tianshu/bert_infer.py --model_path $MODEL_BERT_PATH --w_bit 4 --w_group_size 64 --output_path quantized_model/bert
 ```
-### 3. **Now you can start your test using sh {your_expected}.sh under test folder.**
+### 3. Now you can start your test using 
+```
+sh {your_expected}.sh 
+```

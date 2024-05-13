@@ -1,2 +1,1 @@
-
-python nvidia/bert_infer.py --model_path bert_model/bert-large-cased-lambada --eval
+python nvidia/bert_infer.py --model_path $MODEL_BERT_PATH --eval

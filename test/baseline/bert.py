@@ -1,10 +1,10 @@
 import torch
 import time
-
+import os
 from transformers import BertTokenizer, BertModel, AutoTokenizer, BertForNextSentencePrediction
 
 tokenizer = AutoTokenizer.from_pretrained("bert-large-cased")
-model = BertForNextSentencePrediction.from_pretrained('/home/huangshan/huangshan/project/sparse-quant/test/bert_model/bert-large-cased-lambada', torch_dtype=torch.float32).to("cuda")
+model = BertForNextSentencePrediction.from_pretrained(os.environ.get('MODEL_BERT_PATH'), torch_dtype=torch.float32).to("cuda")
 
 # tokenizer = BertTokenizer.from_pretrained('bert-large-uncased')
 # model = BertModel.from_pretrained("bert-large-uncased").to("cuda")

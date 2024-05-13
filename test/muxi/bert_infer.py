@@ -9,14 +9,14 @@ from quantizer.bert_quantizer import BERTQuantizer
 
 
 parser = argparse.ArgumentParser()
-parser.add_argument("--model_path", type=str, default="bert_model/bert-large-cased-lambada")
+parser.add_argument("--model_path", type=str, default="$MODEL_BERT_PATH")
 parser.add_argument("--w_group_size", type=int, default=128)
 parser.add_argument("--w_bit", type=int, default=16)
 parser.add_argument("--a_group_size", type=int, default=128)
 parser.add_argument("--a_bit", type=int, default=16)
 parser.add_argument("--kv_group_size", type=int, default=64)
 parser.add_argument("--kv_bit", type=int, default=16)
-parser.add_argument("--mask_path", type=str, default=None)  # /share/liutengxuan/NLP-playground/examples/sparse_attention/model/bert/bigbird_pattern_24_16_512_512.pt")
+parser.add_argument("--mask_path", type=str, default=None) 
 parser.add_argument('--lut_path', type=str, default=None)
 parser.add_argument("--output_path", type=str, help="path to save the quantized model")
 parser.add_argument("--quantized", action="store_true")
@@ -154,8 +154,8 @@ if args.eval:
 
 
 # first gen quanted model
-# CUDA_VISIBLE_DEVICES=6 python eval_compress_bert_support_3090.py --model_path bert_model/bert-large-cased-lambada --w_bit 4 --lut_path masks/bert_large_lut.pt --output_path quantized_model/bert
+# CUDA_VISIBLE_DEVICES=6 python eval_compress_bert_support_3090.py --model_path $MODEL_BERT_PATH --w_bit 4 --lut_path /share/huangshan/masks/bert_large_lut.pt --output_path quantized_model/bert
 
 # then run
-# CUDA_VISIBLE_DEVICES=6 python eval_compress_bert_support_3090.py --model_path quantized_model/bert --w_bit 4 --lut_path masks/bert_large_lut.pt --quantized
+# CUDA_VISIBLE_DEVICES=6 python eval_compress_bert_support_3090.py --model_path quantized_model/bert --w_bit 4 --lut_path /share/huangshan/masks/bert_large_lut.pt --quantized
 
