@@ -82,11 +82,11 @@ dataset = {
 eval_dataset = Dataset.from_dict(dataset)
 if args.sample is not None:
     eval_dataset = eval_dataset[args.sample]
+    sample_id = args.sample
 else:
     sample_id = torch.randperm(20).tolist()[:5]
     eval_dataset = eval_dataset[sample_id]
 eval_dataset = Dataset.from_dict(eval_dataset)
-print(eval_dataset)
 
 def collate_fn(data):
     tensor_input_ids, tensor_token_type_ids, tensor_attention_mask, idx, labels = [], [], [], [], []

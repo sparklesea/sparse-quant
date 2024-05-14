@@ -21,7 +21,7 @@ parser.add_argument('--lut_path', type=str, default=None)
 parser.add_argument("--output_path", type=str, help="path to save the quantized model")
 parser.add_argument("--quantized", action="store_true")
 parser.add_argument("--eval", action="store_true")
-parser.add_argument("--sample", nargs="+", type=int, default=[0, 5, 8, 15, 18])
+parser.add_argument("--sample", nargs="+", type=int)
 args = parser.parse_args()
 
 enc = AutoTokenizer.from_pretrained("bert-large-cased")
@@ -82,11 +82,11 @@ dataset = {
 eval_dataset = Dataset.from_dict(dataset)
 if args.sample is not None:
     eval_dataset = eval_dataset[args.sample]
+    sample_id = args.sample
 else:
     sample_id = torch.randperm(20).tolist()[:5]
     eval_dataset = eval_dataset[sample_id]
 eval_dataset = Dataset.from_dict(eval_dataset)
-print(eval_dataset)
 
 def collate_fn(data):
     tensor_input_ids, tensor_token_type_ids, tensor_attention_mask, idx, labels = [], [], [], [], []
