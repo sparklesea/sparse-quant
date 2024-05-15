@@ -31,7 +31,7 @@ triton >= 2.1.0
     ```
     cd quantization/{your GPU environment}/
     ```
-2.  install the look up table attention "playground"
+2.  install the quantization kernel "quant"
     ```
     python setup.py install
     ```
@@ -88,7 +88,7 @@ CUDA_VISIBLE_DEVICES=0 python tianshu/bert_infer.py --model_path $MODEL_BERT_PAT
 ```
 bash {your_expected}.sh 
 ```
-if you want tot choose which sentences to sample
+if you want to choose which sentences to sample
 ```
 bash {your_expected}_support_{your_env}.sh --sample {Sequence number separated by commas, e.g., 0,2,4,8,9} 
 ```
