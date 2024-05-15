@@ -1,1 +1,1 @@
-CUDA_VISIBLE_DEVICES=1 python3 -m flexgen.flex_opt --model $MODEL_OPT_PATH --local --percent 75 25 100 0 100 0 --gen-len 2 --gpu-batch-size 1
+CUDA_VISIBLE_DEVICES=0 python3 -m flexgen.flex_opt --model $MODEL_OPT_PATH --local --percent 75 25 100 0 100 0 --gen-len 2 --gpu-batch-size 1
