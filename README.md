@@ -1,6 +1,23 @@
 # optbert
 
 ### Requirements
+1. conda
+    ```
+    conda create -n test python=3.9
+    ```
+2. torch
+    ```
+    # for muxi
+    pip install /home/public/mxc500-2.19.2.23/wheel/torch-2.0.0+mc2.19.2.23-cp38-cp38-linux_x86_64.whl 
+
+    # for tianshu
+    pip install /share/huangshan/torch-2.1.1+corex.4.0.0-cp39-cp39-linux_x86_64.whl 
+    ```
+3. triton
+    ```
+    # for tianshu
+    pip install /share/huangshan/triton-2.1.0+corex.4.0.0-cp39-cp39-linux_x86_64.whl 
+    ```
 torch == 2.2.1
 transformers == 4.36.2
 triton >= 2.1.0
