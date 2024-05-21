@@ -1,4 +1,6 @@
 
+rm -rf ~/.triton
+
 # 初始化变量  
 samples=()
   
