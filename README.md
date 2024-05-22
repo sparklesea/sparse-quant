@@ -1,26 +1,74 @@
 # optbert
 
 ### Requirements
-1. conda
+1. anaconda
     ```
+    # 用清华源下载会快一些，官方源下载很慢
+    wget -U NoSuchBrowser/1.0 https://mirrors.tuna.tsinghua.edu.cn/anaconda/archive/Anaconda3-2023.07-2-Linux-x86_64.sh
+    # 安装Anaconda
+    sh Anaconda3-2023.07-2-Linux-x86_64.sh
+    # 需要接受许可证
+    Do you accept the license terms? [yes|no]
+    [no] >>> yes
+    # 最好选择yes，否则要手动设置环境变量
+    Do you wish the installer to initialize Anaconda3 by running conda init? [yes|no]
+    [no] >>> yes
+    # 重新登录终端，就有conda命令了，可以查看一下版本
+    conda -V
+
+    # 编辑conda配置文件
+    vim ~/.condarc
+    # 将下面的代码块中的内容粘贴进去，然后清除相关缓存
+    channels:
+        - defaults
+    show_channel_urls: true
+    default_channels:
+        - https://mirrors.tuna.tsinghua.edu.cn/anaconda/pkgs/main
+        - https://mirrors.tuna.tsinghua.edu.cn/anaconda/pkgs/r
+        - https://mirrors.tuna.tsinghua.edu.cn/anaconda/pkgs/msys2
+    custom_channels:
+        conda-forge: https://mirrors.tuna.tsinghua.edu.cn/anaconda/cloud
+        msys2: https://mirrors.tuna.tsinghua.edu.cn/anaconda/cloud
+        bioconda: https://mirrors.tuna.tsinghua.edu.cn/anaconda/cloud
+        menpo: https://mirrors.tuna.tsinghua.edu.cn/anaconda/cloud
+        pytorch: https://mirrors.tuna.tsinghua.edu.cn/anaconda/cloud
+        pytorch-lts: https://mirrors.tuna.tsinghua.edu.cn/anaconda/cloud
+        simpleitk: https://mirrors.tuna.tsinghua.edu.cn/anaconda/cloud
+        deepmodeling: https://mirrors.tuna.tsinghua.edu.cn/anaconda/cloud/
+        nvidia: https://mirrors.sustech.edu.cn/anaconda-extra/cloud
+
+    conda clean -i
+    conda clean -p
+    conda clean -a
+
+    #创建test环境
     conda create -n test python=3.9
+    conda activate test
     ```
-2. torch
+3. cuda for 3090
     ```
+    conda install -c "nvidia/label/cuda-12.1.1" cuda-toolkit
+    ```
+4. torch
+    ```
+    # for 3090
+    pip install torch
+
     # for muxi
     pip install /home/public/mxc500-2.19.2.23/wheel/torch-2.0.0+mc2.19.2.23-cp38-cp38-linux_x86_64.whl 
 
     # for tianshu
     pip install /share/huangshan/torch-2.1.1+corex.4.0.0-cp39-cp39-linux_x86_64.whl 
     ```
-3. triton
+5. triton for tianshu
     ```
-    # for tianshu
     pip install /share/huangshan/triton-2.1.0+corex.4.0.0-cp39-cp39-linux_x86_64.whl 
     ```
-torch == 2.2.1
-transformers == 4.36.2
-triton >= 2.1.0
+6. requirements
+    ```
+    pip install -r requirements.txt
+    ```
+
 ### Pre-installation
 1. lm_eval
     ```

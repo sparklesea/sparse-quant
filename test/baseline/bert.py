@@ -5,7 +5,7 @@ from transformers import BertTokenizer, BertModel, AutoTokenizer, BertForNextSen
 
 tokenizer = AutoTokenizer.from_pretrained("bert-large-cased")
 model = BertForNextSentencePrediction.from_pretrained(os.environ.get('MODEL_BERT_PATH'), torch_dtype=torch.float32).to("cuda")
-
+# model = BertForNextSentencePrediction.from_pretrained(os.environ.get('MODEL_BERT_PATH'), torch_dtype=torch.float32)
 # tokenizer = BertTokenizer.from_pretrained('bert-large-uncased')
 # model = BertModel.from_pretrained("bert-large-uncased").to("cuda")
 
@@ -14,6 +14,7 @@ for prefill_size in [8, 16, 32, 64, 128]:
     
     text = " ".join(words)
     encoded_input = tokenizer(text, return_tensors='pt').to("cuda")
+    # encoded_input = tokenizer(text, return_tensors='pt')
     # print(encoded_input.input_ids.shape)
     output = model(**encoded_input)
 

@@ -1,0 +1,4 @@
+transformers == 4.36.2
+accelerate == 0.28.0
+datasets == 2.18.0
+# triton >= 2.1.0
