@@ -3,6 +3,18 @@
 ### Requirements
 1. anaconda
     ```
+    # 设置代理
+    vim ~/.bashrc
+    # 然后在末尾写入：
+        # 3090
+        export HTTP_PROXY='http://10.10.20.100:1088'
+        export HTTPS_PROXY='http://10.10.20.100:1089'
+        # muxi, tianshu
+        export HTTP_PROXY='http://172.18.10.12:1089'
+        export HTTPS_PROXY='http://172.18.10.12:1089'
+    # 保存退出后
+    source ~/.bashrc
+    
     # 用清华源下载会快一些，官方源下载很慢
     wget -U NoSuchBrowser/1.0 https://mirrors.tuna.tsinghua.edu.cn/anaconda/archive/Anaconda3-2023.07-2-Linux-x86_64.sh
     # 安装Anaconda
@@ -72,7 +84,8 @@
 ### Pre-installation
 1. lm_eval
     ```
-    git clone -b v0.3.0 git@github.com:EleutherAI/lm-evaluation-harness.git
+    conda install git
+    git clone -b v0.3.0 https://github.com/EleutherAI/lm-evaluation-harness.git
     cd lm-evaluation-harness/
     pip install -e .
     ```
