@@ -168,5 +168,5 @@ bash {your_expected}.sh
 ```
 if you want to choose which sentences to sample
 ```
-bash {your_expected}_support_{your_env}.sh --sample {Sequence number separated by commas, e.g., 0,2,4,8,9} 
+bash {your_expected}_support_{your_env}.sh --sample {Sequence number separated by blank space, e.g., 0 2 4 8 9} 
 ```
