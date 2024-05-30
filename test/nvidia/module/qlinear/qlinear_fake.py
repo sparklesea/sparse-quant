@@ -95,7 +95,7 @@ from utils.quant_funcs import pseudo_quantize_tensor
 
 class WALinear(nn.Module):
     def __init__(self, in_features, out_features, w_config = None, a_config = None,
-                 w_bit = 4, a_bit = 16, group_size = 128,
+                 w_bit = 4, a_bit = 16, group_size = 64,
                  bias=True, quantize_output=False, dev="cuda", dtype=torch.float16):
         super().__init__()
         self.in_features = in_features

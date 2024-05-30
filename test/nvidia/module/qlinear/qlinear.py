@@ -78,8 +78,8 @@ class WALinear(nn.Module):
         # new_module.weight, new_module.zeros_scales = pseudo_quantize_tensor(module.weight, inplace=True, **w_config)
         new_module.weight, new_module.zeros_scales, _ = quant_lmdeploy(module.weight, module.in_features, module.out_features, 
                                                                        group_size=w_config['group_size'], n_bit=w_config['n_bit'])
-        print("quant weight shape: ", new_module.weight.shape)
-        print("quant zeros_scales shape: ", new_module.zeros_scales.shape)
+        # print("quant weight shape: ", new_module.weight.shape)
+        # print("quant zeros_scales shape: ", new_module.zeros_scales.shape)
 
         if module.bias is not None:
             new_module.bias = module.bias.unsqueeze(0)

@@ -4,7 +4,6 @@ from utils.utils import build_model_and_enc
 from module.lm_eval_adaptor import LMEvalAdaptor
 from lm_eval import evaluator
 
-from quantizer.opt_quantizer import OPTQuantizer
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--model_path", type=str, help="path of the hf model")
@@ -51,9 +50,14 @@ def main():
         model.model.decoder.use_block_sparse_attention_lut()
         set_static_attention_lut(args.lut_path, None, model.model.decoder.layers, 64)
     model=model.cuda()
+
     if not args.quantized:
         if args.w_bit<16 or args.a_bit<16:
-            quantizer=OPTQuantizer(rep_file=args.rep_file,w_bit=args.w_bit,w_group_size=args.w_group_size,a_bit=args.a_bit,a_group_size=args.a_group_size,a_granularity="per_group",fake_quant=args.fake)
+            if args.fake:
+                from quantizer.opt_quantizer_fake import OPTQuantizer
+            else:
+                from quantizer.opt_quantizer import OPTQuantizer
+            quantizer=OPTQuantizer(rep_file=args.rep_file,w_bit=args.w_bit,w_group_size=args.w_group_size,a_bit=args.a_bit,a_group_size=args.a_group_size,a_granularity="per_group")
             model = quantizer(model)
             # print(model)
         # # save the quantized model

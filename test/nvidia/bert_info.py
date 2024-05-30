@@ -39,8 +39,8 @@ def main():
     model.eval()
 
     sparsity = count_sparsity(args.lut_path)
-    model_info_list=[{"total_weight_count":0,"4bit_count":0,"2bit_count":0,"avg_bit_width":0, "sparsity":(sparsity[i].mean()).item()} for i in range(24)]
-    model_info_list.append({"total_weight_count":0,"4bit_count":0,"2bit_count":0,"avg_bit_width":0})
+    model_info_list=[{"weight_count":0,"4bit_count":0,"2bit_count":0,"avg_bit_width":0, "sparsity":(sparsity[i].mean()).item()} for i in range(24)]
+    model_info_list.append({"weight_count":0,"4bit_count":0,"2bit_count":0,"avg_bit_width":0})
     # print(model_info_list)
     for name, module in model.named_modules():
         if isinstance(module, WALinear):
@@ -50,7 +50,7 @@ def main():
                 pos = int(name.split(".")[3])
             total_count = module.in_features * module.out_features
             # print(int(name.split(".")[3]))
-            model_info_list[pos]["total_weight_count"] += total_count
+            model_info_list[pos]["weight_count"] += total_count
             if module.w_bit == 4:
                 model_info_list[pos]["4bit_count"] += total_count
                 model_info_list[pos]["avg_bit_width"] += total_count * module.w_bit
@@ -58,14 +58,19 @@ def main():
                 model_info_list[pos]["2bit_count"] += total_count * module.w_bit
                 model_info_list[pos]["avg_bit_width"] += total_count * module.w_bit
 
+    total_weight_count,total_4bit_count,total_2bit_count=0,0,0
     total_avg_bit=0
     for i in range(25):
-        model_info_list[i]["avg_bit_width"] /= model_info_list[i]["total_weight_count"]
+        total_weight_count += model_info_list[i]["weight_count"]
+        total_4bit_count += model_info_list[i]["4bit_count"]
+        total_2bit_count += model_info_list[i]["2bit_count"]
+        model_info_list[i]["avg_bit_width"] /= model_info_list[i]["weight_count"]
         total_avg_bit+=model_info_list[i]["avg_bit_width"]
         if i < 24:
             print(f"layer_{i}: {model_info_list[i]}")
         else:
             print(f"pooler: {model_info_list[i]}")
+    print(f"total_weight_count: {total_weight_count}, total_4bit_count: {total_4bit_count}, total_2bit_count: {total_2bit_count}")
     print("total_avg_bit_width: ", total_avg_bit/25)
 
     spar = torch.sum(sparsity) / (sparsity.shape[0] * sparsity.shape[1])
