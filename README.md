@@ -148,7 +148,7 @@ CUDA_VISIBLE_DEVICES=0 python nvidia/opt_infer.py --model_path $MODEL_OPT_PATH -
 CUDA_VISIBLE_DEVICES=0 python muxi/opt_infer.py --model_path $MODEL_OPT_PATH --w_bit 4 --w_group_size 64 --output_path quantized_model/opt --rep_file /home/public/rep_file/facebook_opt-6.7b-smooth.pt
 
 ## tianshu
-CUDA_VISIBLE_DEVICES=0 python tianshu/opt_infer.py --model_path $MODEL_OPT_PATH --w_bit 4 --w_group_size 64 --output_path quantized_model/opt
+CUDA_VISIBLE_DEVICES=0 python tianshu/opt_infer.py --model_path $MODEL_OPT_PATH --w_bit 4 --w_group_size 64 --output_path quantized_model/opt --rep_file /share/huangshan/rep_file/facebook_opt-6.7b-smooth.pt
 ```
 
 ```

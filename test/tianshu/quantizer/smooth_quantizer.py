@@ -31,9 +31,9 @@ class SmoothQuantizer(RTNQuantizer):
             self.scales, self.clips = [], []
 
     def quantize_model(self, model):
-        # assert self.calibrated == True
-        # self.apply_scale(model)
-        # self.apply_clip(model)
+        assert self.calibrated == True
+        self.apply_scale(model)
+        self.apply_clip(model)
         return super().quantize_model(model)
 
     def apply_scale(self, module, input_feat_dict=None):
