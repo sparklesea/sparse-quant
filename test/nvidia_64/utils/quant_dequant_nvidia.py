@@ -2,7 +2,7 @@ import torch
 from quant import transpose_merge_zeros_scales, convert_ours_to_awq, convert_awq_to_lmdeploy
 
 # W4A16 reformat quant param
-def quant_nvidia(weight, input_features, output_features, group_size, n_bit):
+def quant_lmdeploy(weight, input_features, output_features, group_size, n_bit):
 
     qweight, zeros, scales, w_fp16 = generate_quant(weight, input_features, n_bit, group_size)
 
@@ -20,19 +20,16 @@ def quant_nvidia(weight, input_features, output_features, group_size, n_bit):
                         input_features, 
                         output_features)
 
-    # qweight_lmdeploy = torch.empty((input_features, output_features // 8), dtype=torch.int, device="cuda")
-    # convert_awq_to_lmdeploy(qweight_awq,
-    #                         qweight_lmdeploy,
-    #                         input_features,
-    #                         output_features)
+    qweight_lmdeploy = torch.empty((input_features, output_features // 8), dtype=torch.int, device="cuda")
+    convert_awq_to_lmdeploy(qweight_awq,
+                            qweight_lmdeploy,
+                            input_features,
+                            output_features)
     
-    # if n_bit == 2:
-    #     qweight_lmdeploy = convert_4bit_to_2bit(qweight_lmdeploy)
-
     if n_bit == 2:
-        qweight_awq = convert_4bit_to_2bit(qweight_awq)
+        qweight_lmdeploy = convert_4bit_to_2bit(qweight_lmdeploy)
 
-    return qweight_awq, zeros_scales, w_fp16
+    return qweight_lmdeploy, zeros_scales, w_fp16
 
 def convert_4bit_to_2bit(qweight_4bit):
     origin_shape = qweight_4bit.shape

@@ -473,7 +473,7 @@ __global__ __forceinline__ void w4a16_gemm_wmma_kernel(uint32_t* __restrict__ qw
     int by = blockIdx.y;
 
     int tid = threadIdx.x;
-    int wid = tid / 64;
+    int wid = tid / 32;
 
     __shared__ half smem[(BM + BN) * LDK];
     half* s_a = smem;
@@ -559,17 +559,17 @@ __global__ __forceinline__ void w4a16_gemm_wmma_kernel(uint32_t* __restrict__ qw
         nvcuda::wmma::load_matrix_sync(frag_b, &s_b[wid * 16], LDK);
         nvcuda::wmma::mma_sync(frag_c, frag_a, frag_b, frag_c);
 
-        nvcuda::wmma::load_matrix_sync(frag_a, &s_a[wid * 16 + 64], LDK);
-        nvcuda::wmma::load_matrix_sync(frag_b, &s_b[wid * 16 + 64], LDK);
-        nvcuda::wmma::mma_sync(frag_c, frag_a, frag_b, frag_c);
+        // nvcuda::wmma::load_matrix_sync(frag_a, &s_a[wid * 16 + 64], LDK);
+        // nvcuda::wmma::load_matrix_sync(frag_b, &s_b[wid * 16 + 64], LDK);
+        // nvcuda::wmma::mma_sync(frag_c, frag_a, frag_b, frag_c);
 
         nvcuda::wmma::load_matrix_sync(frag_a, &s_a[wid * 16 + 128], LDK);
         nvcuda::wmma::load_matrix_sync(frag_b, &s_b[wid * 16 + 128], LDK);
         nvcuda::wmma::mma_sync(frag_c, frag_a, frag_b, frag_c);
 
-        nvcuda::wmma::load_matrix_sync(frag_a, &s_a[wid * 16 + 192], LDK);
-        nvcuda::wmma::load_matrix_sync(frag_b, &s_b[wid * 16 + 192], LDK);
-        nvcuda::wmma::mma_sync(frag_c, frag_a, frag_b, frag_c);
+        // nvcuda::wmma::load_matrix_sync(frag_a, &s_a[wid * 16 + 192], LDK);
+        // nvcuda::wmma::load_matrix_sync(frag_b, &s_b[wid * 16 + 192], LDK);
+        // nvcuda::wmma::mma_sync(frag_c, frag_a, frag_b, frag_c);
 
         __syncthreads();
         load_a_gmem_addr += BK;
@@ -580,6 +580,18 @@ __global__ __forceinline__ void w4a16_gemm_wmma_kernel(uint32_t* __restrict__ qw
     nvcuda::wmma::store_matrix_sync(&smem[wid * BM * LDN], frag_c, LDN, nvcuda::wmma::layout_t::mem_row_major);
 
     __syncthreads();
+
+    // int smem_c_m = tid / 16;
+    // int smem_c_n = tid % 16;
+    // int smem_c_addr = OFFSET(smem_c_m, smem_c_n, LDN);
+
+    // int gmem_c_m = by * BM + smem_c_m;
+    // int gmem_c_n = bx * BN + smem_c_n;
+    // int gmem_c_addr = OFFSET(gmem_c_m, gmem_c_n, N);
+
+    // smem[smem_c_addr] = __hadd(smem[smem_c_addr], smem[smem_c_addr + BM * LDN]);
+    // smem[smem_c_addr] = __hadd(smem[smem_c_addr], smem[smem_c_addr + BM * LDN * 2]);
+    // smem[smem_c_addr] = __hadd(smem[smem_c_addr], smem[smem_c_addr + BM * LDN * 3]);
 
     int smem_c_m = tid / 16;
     int smem_c_n = tid % 16;
@@ -592,6 +604,10 @@ __global__ __forceinline__ void w4a16_gemm_wmma_kernel(uint32_t* __restrict__ qw
     smem[smem_c_addr] = __hadd(smem[smem_c_addr], smem[smem_c_addr + BM * LDN]);
     smem[smem_c_addr] = __hadd(smem[smem_c_addr], smem[smem_c_addr + BM * LDN * 2]);
     smem[smem_c_addr] = __hadd(smem[smem_c_addr], smem[smem_c_addr + BM * LDN * 3]);
+    smem[smem_c_addr] = __hadd(smem[smem_c_addr], smem[smem_c_addr + BM * LDN * 4]);
+    smem[smem_c_addr] = __hadd(smem[smem_c_addr], smem[smem_c_addr + BM * LDN * 5]);
+    smem[smem_c_addr] = __hadd(smem[smem_c_addr], smem[smem_c_addr + BM * LDN * 6]);
+    smem[smem_c_addr] = __hadd(smem[smem_c_addr], smem[smem_c_addr + BM * LDN * 7]);
 
     if (gmem_c_m < M) {
         output[gmem_c_addr] = smem[smem_c_addr];
