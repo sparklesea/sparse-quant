@@ -5,13 +5,42 @@
     ```
     # 设置代理
     vim ~/.bashrc
-    # 然后在末尾写入：
+    # 然后在末尾写入, 注意其中需要替换的部分{}：
         # 3090
         export HTTP_PROXY='http://10.10.20.100:1088'
         export HTTPS_PROXY='http://10.10.20.100:1089'
-        # muxi, tianshu
+
+        # muxi
         export HTTP_PROXY='http://172.18.10.12:1089'
         export HTTPS_PROXY='http://172.18.10.12:1089'
+        # replace "your name"
+        torch=torch=/home/{your name}/anaconda3/envs/torch/lib/python3.8/site-packages/torch
+        export PATH=$PATH:/opt/maca/mxgpu_llvm/bin:/opt/maca/bin
+        export MACA_PATH=/opt/maca
+        export LD_LIBRARY_PATH=/opt/maca/lib:/opt/maca/mxgpu_llvm/lib:/opt/maca/ompi/lib:$LD_LIBRARY_PATH
+        export LIBTORCH_PATH=${torch}
+        export LD_LIBRARY_PATH=${torch}/lib:$LD_LIBRARY_PATH
+        export CMAKE_PREFIX_PATH=${torch}/share/cmake/Torch:$CMAKE_PREFIX_PATH
+        export CUCC_PATH=/opt/maca/tools/cu-bridge
+        export PATH=$PATH:${CUCC_PATH}/tools:${CUCC_PATH}/bin
+        export CUDA_PATH=/opt/cu-bridge/CUDA_DIR
+        export PATH=$PATH:${CUDA_PATH}/bin
+        export CUDA_HOME=/opt/maca/tools/cu-bridge
+        export LD_LIBRARY_PATH=/usr/lib/x86_64-linux-gnu:$LD_LIBRARY_PATH
+        export LD_LIBRARY_PATH=/usr/local/cuda/lib64/stubs:$LD_LIBRARY_PATH
+
+        #tianshu
+        export HTTP_PROXY='http://172.18.10.12:1089'
+        export HTTPS_PROXY='http://172.18.10.12:1089'
+        export PATH="/usr/local/corex/bin:$PATH"
+        export LD_LIBRARY_PATH="/usr/local/corex/lib:$LD_LIBRARY_PATH"
+        export CPLUS_INCLUDE_PATH="$CPLUS_INCLUDE_PATH:/usr/include/x86_64-linux-gnu/c++/11/"
+        export CPLUS_INCLUDE_PATH="$CPLUS_INCLUDE_PATH:/usr/include/c++/11/"
+        export LD_LIBRARY_PATH=/usr/lib/gcc/x86_64-linux-gnu/11/:$LD_LIBRARY_PATH
+        # replace "your name"
+        export PATH="/home/{your name}/anaconda3/envs/torch/bin:$PATH"
+        export CXX=x86_64-conda-linux-gnu-g++
+
     # 保存退出后
     source ~/.bashrc
     
@@ -67,7 +96,8 @@
     pip install torch
 
     # for muxi
-    pip install /home/public/mxc500-2.19.2.23/wheel/torch-2.0.0+mc2.19.2.23-cp38-cp38-linux_x86_64.whl 
+    pip install /home/public/mxc500-2.19.2.23/wheel/torch-2.0.0+mc2.19.2.23-cp38-cp38-linux_x86_64.whl
+    python test/patch.py
 
     # for tianshu
     pip install /share/huangshan/torch-2.1.1+corex.4.0.0-cp39-cp39-linux_x86_64.whl 
@@ -80,8 +110,6 @@
     ```
     pip install -r requirements.txt
     ```
-7. patch
-    python test/patch.py
 
 ### Pre-installation
 1. lm_eval
