@@ -24,9 +24,9 @@ BENCHMARK_FLAG = args.benchmark
 
 ### test settings
 GROUP_SIZE = 128
-# Dim = [[4096 // MP, 4096], [5120 // MP, 5120], [11008 // MP, 4096], [13696 // MP, 5120]] if args.algo_id < 2 else \
-#     [[4096, 11008 // MP], [5120, 13696 // MP]]
-Dim = [[4096 // MP, 4096]]
+Dim = [[4096 // MP, 4096], [5120 // MP, 5120], [11008 // MP, 4096], [13696 // MP, 5120]] if args.algo_id < 2 else \
+    [[4096, 11008 // MP], [5120, 13696 // MP]]
+# Dim = [[4096 // MP, 4096]]
 
 Seqlens = [1, 2, 4, 8, 16, 32, 64, 128, 256, 512]
 
