@@ -80,6 +80,8 @@
     ```
     pip install -r requirements.txt
     ```
+7. patch
+    python test/patch.py
 
 ### Pre-installation
 1. lm_eval
