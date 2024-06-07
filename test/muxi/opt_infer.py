@@ -123,7 +123,7 @@ def main():
         # print(sample_prompts)
         for prompt in sample_prompts:
             input_ids = enc(prompt, return_tensors="pt").input_ids.cuda()
-            generated_ids = model.generate(input_ids, max_length=512)
+            generated_ids = model.generate(input_ids, max_length=64)
             out = enc.batch_decode(generated_ids, skip_special_tokens=True)
 
             print("prompt: ", prompt)
