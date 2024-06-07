@@ -30,28 +30,27 @@ parser.add_argument("--eval", action="store_true")
 args = parser.parse_args()
 
 prompts = [
-    "In the future city, between skyscrapers towering into the clouds, people travel through", 
+    "In that tumultuous era, heroes emerged, and none was more legendary than", 
+    "Once upon a time, in a faraway forest, there lived a", 
     "In the morning, the first ray of sunlight filtered through the curtains, spilling onto the bed. I slowly opened my eyes and found", 
-    "Imagine you are an explorer searching for a lost ancient city in an unknown jungle", 
     "In the future underwater city, humans coexist harmoniously with marine life, creating a", 
     "On a distant planet, the passage of time differs from that on Earth, and a day might be equivalent to", 
-    "Amidst the entanglement of war and peace, a little girl changed the fate of an entire country with her innocence and courage", 
-    "Deep in the distant space, a spaceship encountered an unknown crisis, and the crew had to", 
-    "In the world of the future, virtual reality technology has reached its peak, allowing people to", 
-    "In the endless universe, there is a creature that possesses the ability to control time, known as", 
+    "As night fell, a lonely traveler entered a mysterious tavern and encountered", 
+    "In the future city, between skyscrapers towering into the clouds, people travel through", 
+    "In a kingdom filled with magic and miracles, a young mage decided to save his country", 
+    "When robots acquire emotions and consciousness, how will their relationship with humans change", 
+    "In a parallel world where technology and magic coexist, humans create a weapon", 
     "On a journey filled with fantasy and adventure, a young warrior and his companions encountered", 
-    "Describe the adventure of a lifetime for a group of friends who found a map leading to a parallel universe.", 
+    "Deep in the distant space, a human spaceship encountered a friendly monster", 
+    "What is the Voynich manuscript, and why has it perplexed scholars for centuries?", 
+    "What was Project A119 and what were its objectives?", 
+    "What is the 'Phantom Time Hypothesis' proposed by Heribert Illig?", 
     "What were the major contributing factors to the fall of the Roman Empire?", 
     "How did the invention of the printing press revolutionize European society?", 
-    "What are the effects of quantitative easing?", 
     "What were the economic and philosophical factors that led to the fall of the Soviet Union?", 
+    "What are 'zombie stars' in the context of astronomy?", 
     "What was the influence of the Khmer Empire on Southeast Asia's history and culture?", 
-    "What is the Voynich manuscript, and why has it perplexed scholars for centuries?", 
-    "What is the 'Dyatlov Pass incident' and why does it remain a mystery?", 
-    "What is the 'Phantom Time Hypothesis' proposed by Heribert Illig?", 
-    "Who were the 'Dog-Headed Saint' and the 'Lion-Faced Saint' in medieval Christian traditions?", 
 ]
-
 
 def main():
     print("* Quantization Format: kv_{}_w_{}_a_{}".format(args.kv_bit, args.w_bit, args.a_bit))
