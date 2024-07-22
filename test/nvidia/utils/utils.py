@@ -150,6 +150,13 @@ def build_model_and_enc(model_path, use_flash_attn, kv_bit=16, kv_group_size=128
             from module.opt.modeling_opt import OPTForCausalLM
 
         model = OPTForCausalLM.from_pretrained(model_path, config=config, trust_remote_code=trust_remote_code, **kwargs)
+    elif "llama" in model_path.lower():
+        if quantized:
+            from module.llama.modeling_llama_ours import LlamaForCausalLM
+            print("load quantized model")
+        else:
+            from module.llama.modeling_llama import LlamaForCausalLM
+        model = LlamaForCausalLM.from_pretrained(model_path, config=config, trust_remote_code=trust_remote_code, **kwargs)
     else:
         model = AutoModelForCausalLM.from_pretrained(model_path, config=config, trust_remote_code=trust_remote_code, **kwargs)
     return model, enc

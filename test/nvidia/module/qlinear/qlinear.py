@@ -65,7 +65,9 @@ class WALinear(nn.Module):
         # print("weight: ", temp_weight.shape)
         # print("x: ", x.shape)
         y = gemm_awq_ut(x,temp_weight,self.zeros_scales,x.shape[-2],
-                        self.out_features, self.in_features, self.group_size) + self.bias
+                        self.out_features, self.in_features, self.group_size)
+        if self.bias is not None:
+            y = y + self.bias
         
         return y
 
