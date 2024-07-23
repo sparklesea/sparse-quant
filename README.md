@@ -158,6 +158,7 @@
 #nvidia or tianshu
 export MODEL_OPT_PATH=/share/huangshan/opt-6.7b
 export MODEL_BERT_PATH=/share/huangshan/bert-large-cased-lambada
+export MODEL_LLAMA_PATH=/share/yuzhen/llama2-chinese
 
 #muxi
 export MODEL_OPT_PATH=/home/public/models/opt-6.7b
@@ -166,6 +167,7 @@ export MODEL_BERT_PATH=/home/public/models/bert-large-cased-lambada
 #else
 export MODEL_OPT_PATH={opt model path}
 export MODEL_BERT_PATH={bert model path}
+export MODEL_LLAMA_PATH={llama model path}
 ```
 ### 2. Generate quantized models
 
@@ -191,6 +193,11 @@ CUDA_VISIBLE_DEVICES=0 python muxi/bert_infer.py --model_path $MODEL_BERT_PATH -
 
 ## tianshu
 CUDA_VISIBLE_DEVICES=0 python tianshu/bert_infer.py --model_path $MODEL_BERT_PATH --w_bit 4 --w_group_size 64 --output_path quantized_model/bert
+```
+
+```
+# for llama
+CUDA_VISIBLE_DEVICES=0 python nvidia/llama_infer.py --model_path $MODEL_LLAMA_PATH --w_bit 4 --output_path quantized_model/llama
 ```
 ### 3. Now you can start your test using 
 ```
